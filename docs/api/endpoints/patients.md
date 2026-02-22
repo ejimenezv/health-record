@@ -12,8 +12,18 @@ This document defines the patient management endpoints for the MedRecord AI API.
 | POST | `/api/v1/patients` | Create a new patient | Yes |
 | GET | `/api/v1/patients/:id` | Get patient details | Yes |
 | PUT | `/api/v1/patients/:id` | Update patient | Yes |
-| DELETE | `/api/v1/patients/:id` | Delete patient (soft) | Yes |
+| DELETE | `/api/v1/patients/:id` | Delete patient | Yes |
 | GET | `/api/v1/patients/:id/appointments` | Get patient appointments | Yes |
+| GET | `/api/v1/patients/:patientId/allergies` | Get patient allergies | Yes |
+| POST | `/api/v1/patients/:patientId/allergies` | Add allergy to patient | Yes |
+| GET | `/api/v1/allergies/:id` | Get allergy by ID | Yes |
+| PUT | `/api/v1/allergies/:id` | Update allergy | Yes |
+| DELETE | `/api/v1/allergies/:id` | Delete allergy | Yes |
+| GET | `/api/v1/patients/:patientId/chronic-conditions` | Get patient chronic conditions | Yes |
+| POST | `/api/v1/patients/:patientId/chronic-conditions` | Add chronic condition to patient | Yes |
+| GET | `/api/v1/chronic-conditions/:id` | Get chronic condition by ID | Yes |
+| PUT | `/api/v1/chronic-conditions/:id` | Update chronic condition | Yes |
+| DELETE | `/api/v1/chronic-conditions/:id` | Delete chronic condition | Yes |
 
 ---
 
@@ -142,26 +152,14 @@ Create a new patient record.
   "phone": "+1-555-0100",
   "email": "jane.doe@email.com",
   "address": "123 Main Street, Springfield, IL 62701",
+  "bloodType": "O+",
   "emergencyContactName": "John Doe",
   "emergencyContactPhone": "+1-555-0101",
-  "emergencyContactRelationship": "Spouse",
-  "allergies": [
-    {
-      "allergen": "Penicillin",
-      "reaction": "Hives",
-      "severity": "moderate"
-    }
-  ],
-  "chronicConditions": [
-    {
-      "conditionName": "Type 2 Diabetes",
-      "diagnosisDate": "2020-05-10",
-      "status": "active",
-      "notes": "Managed with metformin"
-    }
-  ]
+  "emergencyContactRelationship": "Spouse"
 }
 ```
+
+> **Note**: Allergies and chronic conditions are managed separately via their own endpoints after patient creation.
 
 ### Field Requirements
 
@@ -174,11 +172,10 @@ Create a new patient record.
 | `phone` | string | Yes | Valid phone format |
 | `email` | string | No | Valid email format |
 | `address` | string | No | Max 200 characters |
+| `bloodType` | enum | No | `A+`, `A-`, `B+`, `B-`, `AB+`, `AB-`, `O+`, `O-` |
 | `emergencyContactName` | string | Yes | 2-100 characters |
 | `emergencyContactPhone` | string | Yes | Valid phone format |
 | `emergencyContactRelationship` | string | No | Max 50 characters |
-| `allergies` | array | No | Array of allergy objects |
-| `chronicConditions` | array | No | Array of condition objects |
 
 ### Response (201 Created)
 
@@ -194,30 +191,14 @@ Create a new patient record.
     "phone": "+1-555-0100",
     "email": "jane.doe@email.com",
     "address": "123 Main Street, Springfield, IL 62701",
+    "bloodType": "O+",
     "emergencyContactName": "John Doe",
     "emergencyContactPhone": "+1-555-0101",
     "emergencyContactRelationship": "Spouse",
-    "allergies": [
-      {
-        "id": "aa0e8400-e29b-41d4-a716-446655440010",
-        "allergen": "Penicillin",
-        "reaction": "Hives",
-        "severity": "moderate"
-      }
-    ],
-    "chronicConditions": [
-      {
-        "id": "cc0e8400-e29b-41d4-a716-446655440020",
-        "conditionName": "Type 2 Diabetes",
-        "diagnosisDate": "2020-05-10",
-        "status": "active",
-        "notes": "Managed with metformin"
-      }
-    ],
     "createdAt": "2024-01-15T10:30:00.000Z",
     "updatedAt": "2024-01-15T10:30:00.000Z"
   },
-  "message": "Patient created successfully"
+  "message": "Paciente creado exitosamente"
 }
 ```
 
@@ -303,6 +284,7 @@ Get detailed information about a specific patient.
     "phone": "+1-555-0100",
     "email": "jane.doe@email.com",
     "address": "123 Main Street, Springfield, IL 62701",
+    "bloodType": "O+",
     "emergencyContactName": "John Doe",
     "emergencyContactPhone": "+1-555-0101",
     "emergencyContactRelationship": "Spouse",
@@ -312,7 +294,8 @@ Get detailed information about a specific patient.
         "allergen": "Penicillin",
         "reaction": "Hives",
         "severity": "moderate",
-        "onsetDate": null
+        "onsetDate": null,
+        "createdAt": "2024-01-15T10:30:00.000Z"
       }
     ],
     "chronicConditions": [
@@ -321,23 +304,26 @@ Get detailed information about a specific patient.
         "conditionName": "Type 2 Diabetes",
         "diagnosisDate": "2020-05-10",
         "status": "active",
-        "notes": "Managed with metformin"
+        "notes": "Managed with metformin",
+        "createdAt": "2024-01-15T10:30:00.000Z"
       }
     ],
-    "recentAppointments": [
+    "appointments": [
       {
         "id": "770e8400-e29b-41d4-a716-446655440002",
         "appointmentDate": "2024-01-20T14:30:00.000Z",
-        "appointmentType": "sick_visit",
         "status": "completed",
-        "reasonForVisit": "Persistent headache",
-        "diagnosis": "Tension headache"
+        "medicalRecord": {
+          "id": "880e8400-e29b-41d4-a716-446655440003"
+        }
       }
     ],
+    "_count": {
+      "appointments": 5
+    },
     "createdAt": "2024-01-15T10:30:00.000Z",
     "updatedAt": "2024-01-15T10:30:00.000Z"
-  },
-  "message": "Success"
+  }
 }
 ```
 
@@ -348,9 +334,7 @@ Get detailed information about a specific patient.
 ```json
 {
   "success": false,
-  "data": null,
-  "message": "Patient not found",
-  "errors": []
+  "message": "Paciente no encontrado"
 }
 ```
 
@@ -580,9 +564,30 @@ GET /api/v1/patients/660e8400.../appointments?startDate=2024-01-01&endDate=2024-
 
 ---
 
-## Allergy Sub-Resource
+## Allergy Endpoints
 
-### POST /api/v1/patients/:id/allergies
+Allergies are managed separately from the patient resource with their own CRUD operations.
+
+### GET /api/v1/patients/:patientId/allergies
+
+Get all allergies for a patient.
+
+```json
+// Response (200)
+[
+  {
+    "id": "aa0e8400-e29b-41d4-a716-446655440011",
+    "patientId": "660e8400-e29b-41d4-a716-446655440001",
+    "allergen": "Aspirin",
+    "reaction": "Stomach bleeding",
+    "severity": "severe",
+    "onsetDate": "2022-06-15",
+    "createdAt": "2024-01-16T09:20:00.000Z"
+  }
+]
+```
+
+### POST /api/v1/patients/:patientId/allergies
 
 Add an allergy to a patient.
 
@@ -597,30 +602,65 @@ Add an allergy to a patient.
 
 // Response (201)
 {
-  "success": true,
-  "data": {
-    "id": "aa0e8400-e29b-41d4-a716-446655440011",
-    "allergen": "Aspirin",
-    "reaction": "Stomach bleeding",
-    "severity": "severe",
-    "onsetDate": "2022-06-15",
-    "createdAt": "2024-01-16T09:20:00.000Z"
-  },
-  "message": "Allergy added successfully"
+  "id": "aa0e8400-e29b-41d4-a716-446655440011",
+  "patientId": "660e8400-e29b-41d4-a716-446655440001",
+  "allergen": "Aspirin",
+  "reaction": "Stomach bleeding",
+  "severity": "severe",
+  "onsetDate": "2022-06-15",
+  "createdAt": "2024-01-16T09:20:00.000Z"
 }
 ```
 
-### DELETE /api/v1/patients/:patientId/allergies/:allergyId
+#### Allergy Field Requirements
 
-Remove an allergy from a patient.
+| Field | Type | Required | Validation |
+|-------|------|----------|------------|
+| `allergen` | string | Yes | Min 1 character |
+| `reaction` | string | No | Description of reaction |
+| `severity` | enum | No | `mild`, `moderate`, `severe`, `life_threatening` |
+| `onsetDate` | date | No | Valid date format |
+
+### GET /api/v1/allergies/:id
+
+Get a specific allergy by ID.
+
+### PUT /api/v1/allergies/:id
+
+Update an allergy.
+
+### DELETE /api/v1/allergies/:id
+
+Remove an allergy.
 
 **Response**: 204 No Content
 
 ---
 
-## Chronic Condition Sub-Resource
+## Chronic Condition Endpoints
 
-### POST /api/v1/patients/:id/conditions
+Chronic conditions are managed separately from the patient resource with their own CRUD operations.
+
+### GET /api/v1/patients/:patientId/chronic-conditions
+
+Get all chronic conditions for a patient.
+
+```json
+// Response (200)
+[
+  {
+    "id": "cc0e8400-e29b-41d4-a716-446655440021",
+    "patientId": "660e8400-e29b-41d4-a716-446655440001",
+    "conditionName": "Hypertension",
+    "diagnosisDate": "2023-03-20",
+    "status": "active",
+    "notes": "Stage 1, diet controlled",
+    "createdAt": "2024-01-16T09:25:00.000Z"
+  }
+]
+```
+
+### POST /api/v1/patients/:patientId/chronic-conditions
 
 Add a chronic condition to a patient.
 
@@ -635,24 +675,48 @@ Add a chronic condition to a patient.
 
 // Response (201)
 {
-  "success": true,
-  "data": {
-    "id": "cc0e8400-e29b-41d4-a716-446655440021",
-    "conditionName": "Hypertension",
-    "diagnosisDate": "2023-03-20",
-    "status": "active",
-    "notes": "Stage 1, diet controlled",
-    "createdAt": "2024-01-16T09:25:00.000Z"
-  },
-  "message": "Condition added successfully"
+  "id": "cc0e8400-e29b-41d4-a716-446655440021",
+  "patientId": "660e8400-e29b-41d4-a716-446655440001",
+  "conditionName": "Hypertension",
+  "diagnosisDate": "2023-03-20",
+  "status": "active",
+  "notes": "Stage 1, diet controlled",
+  "createdAt": "2024-01-16T09:25:00.000Z"
 }
 ```
 
-### DELETE /api/v1/patients/:patientId/conditions/:conditionId
+#### Chronic Condition Field Requirements
 
-Remove a chronic condition from a patient.
+| Field | Type | Required | Validation |
+|-------|------|----------|------------|
+| `conditionName` | string | Yes | Min 1 character |
+| `diagnosisDate` | date | No | Valid date format |
+| `status` | enum | No | `active`, `resolved`, `managed` |
+| `notes` | string | No | Additional notes |
+
+### GET /api/v1/chronic-conditions/:id
+
+Get a specific chronic condition by ID.
+
+### PUT /api/v1/chronic-conditions/:id
+
+Update a chronic condition.
+
+### DELETE /api/v1/chronic-conditions/:id
+
+Remove a chronic condition.
 
 **Response**: 204 No Content
+
+---
+
+## Access Control Notes
+
+Patients can be accessed by a provider if:
+1. The patient has at least one appointment with that provider, OR
+2. The patient has no appointments yet (newly created patient)
+
+This allows providers to view and manage patients they've just created before scheduling their first appointment
 
 ---
 

@@ -288,6 +288,8 @@ Patient:
       type: string
       nullable: true
       example: "123 Main Street, Springfield, IL 62701"
+    bloodType:
+      $ref: '#/components/schemas/BloodType'
     emergencyContactName:
       type: string
       example: "John Doe"
@@ -396,6 +398,8 @@ CreatePatientRequest:
     address:
       type: string
       maxLength: 200
+    bloodType:
+      $ref: '#/components/schemas/BloodType'
     emergencyContactName:
       type: string
       minLength: 2
@@ -405,15 +409,9 @@ CreatePatientRequest:
     emergencyContactRelationship:
       type: string
       maxLength: 50
-    allergies:
-      type: array
-      items:
-        $ref: '#/components/schemas/CreateAllergyRequest'
-    chronicConditions:
-      type: array
-      items:
-        $ref: '#/components/schemas/CreateChronicConditionRequest'
 ```
+
+> **Note**: Allergies and chronic conditions are managed via separate endpoints after patient creation.
 
 ### UpdatePatientRequest
 
@@ -442,6 +440,8 @@ UpdatePatientRequest:
     address:
       type: string
       maxLength: 200
+    bloodType:
+      $ref: '#/components/schemas/BloodType'
     emergencyContactName:
       type: string
       minLength: 2
@@ -464,6 +464,23 @@ Sex:
     - other
 ```
 
+### BloodType
+
+```yaml
+BloodType:
+  type: string
+  nullable: true
+  enum:
+    - A+
+    - A-
+    - B+
+    - B-
+    - AB+
+    - AB-
+    - O+
+    - O-
+```
+
 ### Allergy
 
 ```yaml
@@ -471,6 +488,8 @@ Allergy:
   type: object
   properties:
     id:
+      $ref: '#/components/schemas/UUID'
+    patientId:
       $ref: '#/components/schemas/UUID'
     allergen:
       type: string
@@ -531,6 +550,8 @@ ChronicCondition:
   properties:
     id:
       $ref: '#/components/schemas/UUID'
+    patientId:
+      $ref: '#/components/schemas/UUID'
     conditionName:
       type: string
       example: "Type 2 Diabetes"
@@ -539,14 +560,25 @@ ChronicCondition:
       format: date
       nullable: true
     status:
-      type: string
-      example: "active"
+      $ref: '#/components/schemas/ChronicConditionStatus'
     notes:
       type: string
       nullable: true
     createdAt:
       type: string
       format: date-time
+```
+
+### ChronicConditionStatus
+
+```yaml
+ChronicConditionStatus:
+  type: string
+  nullable: true
+  enum:
+    - active
+    - resolved
+    - managed
 ```
 
 ### CreateChronicConditionRequest

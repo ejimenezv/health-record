@@ -18,6 +18,7 @@ model Patient {
   phone                        String
   email                        String?
   address                      String?
+  bloodType                    String?
   emergencyContactName         String
   emergencyContactPhone        String
   emergencyContactRelationship String?
@@ -48,6 +49,7 @@ model Patient {
 | `phone` | String | Yes | NOT NULL | Primary contact phone |
 | `email` | String | No | NULL | Email address |
 | `address` | String | No | NULL | Full address (single field) |
+| `bloodType` | String | No | NULL | Blood type (A+, A-, B+, B-, AB+, AB-, O+, O-) |
 | `emergencyContactName` | String | Yes | NOT NULL | Emergency contact full name |
 | `emergencyContactPhone` | String | Yes | NOT NULL | Emergency contact phone |
 | `emergencyContactRelationship` | String | No | NULL | Relationship to patient |
@@ -66,6 +68,21 @@ model Patient {
 
 ---
 
+## Blood Type Values
+
+| Value | Description |
+|-------|-------------|
+| `A+` | A positive |
+| `A-` | A negative |
+| `B+` | B positive |
+| `B-` | B negative |
+| `AB+` | AB positive |
+| `AB-` | AB negative |
+| `O+` | O positive |
+| `O-` | O negative |
+
+---
+
 ## Validation Rules
 
 | Field | Validation | Error Message |
@@ -81,6 +98,7 @@ model Patient {
 | `emergencyContactName` | 2-100 characters | "Emergency contact name must be 2-100 characters" |
 | `emergencyContactPhone` | Valid phone format | "Invalid emergency contact phone" |
 | `emergencyContactRelationship` | Max 50 characters | "Relationship too long" |
+| `bloodType` | Valid enum value (if provided) | "Invalid blood type" |
 
 ---
 
@@ -113,6 +131,7 @@ model Patient {
 | `createdAt` | `now()` |
 | `email` | `null` |
 | `address` | `null` |
+| `bloodType` | `null` |
 | `emergencyContactRelationship` | `null` |
 
 ---
@@ -147,6 +166,7 @@ model Patient {
   "phone": "+1-555-0100",
   "email": "jane.doe@email.com",
   "address": "123 Main Street, Springfield, IL 62701",
+  "bloodType": "O+",
   "emergencyContactName": "John Doe",
   "emergencyContactPhone": "+1-555-0101",
   "emergencyContactRelationship": "Spouse",

@@ -79,6 +79,7 @@ model Patient {
   phone                        String
   email                        String?
   address                      String?
+  bloodType                    String?
   emergencyContactName         String
   emergencyContactPhone        String
   emergencyContactRelationship String?

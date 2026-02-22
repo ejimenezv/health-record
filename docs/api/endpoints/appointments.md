@@ -9,11 +9,59 @@ This document defines the appointment management endpoints for the MedRecord AI 
 | Method | Endpoint | Description | Auth Required |
 |--------|----------|-------------|---------------|
 | GET | `/api/v1/appointments` | List all appointments | Yes |
+| GET | `/api/v1/appointments/today` | Get today's appointments | Yes |
 | POST | `/api/v1/appointments` | Create new appointment | Yes |
 | GET | `/api/v1/appointments/:id` | Get appointment details | Yes |
 | PUT | `/api/v1/appointments/:id` | Update appointment | Yes |
 | PATCH | `/api/v1/appointments/:id/status` | Update appointment status | Yes |
-| DELETE | `/api/v1/appointments/:id` | Cancel appointment | Yes |
+| DELETE | `/api/v1/appointments/:id` | Delete appointment | Yes |
+
+---
+
+## GET /api/v1/appointments/today
+
+Get all appointments scheduled for today for the current provider. Useful for dashboard display.
+
+### Request
+
+```yaml
+/api/v1/appointments/today:
+  get:
+    summary: Get today's appointments
+    tags:
+      - Appointments
+    security:
+      - bearerAuth: []
+```
+
+### Response (200 OK)
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "770e8400-e29b-41d4-a716-446655440002",
+      "patient": {
+        "id": "660e8400-e29b-41d4-a716-446655440001",
+        "firstName": "Jane",
+        "lastName": "Doe",
+        "dateOfBirth": "1985-03-15",
+        "phone": "+1-555-0100"
+      },
+      "appointmentDate": "2024-01-20T14:30:00.000Z",
+      "appointmentType": "sick_visit",
+      "reasonForVisit": "Persistent headache",
+      "status": "scheduled",
+      "durationMinutes": 30,
+      "medicalRecord": null,
+      "createdAt": "2024-01-15T10:30:00.000Z"
+    }
+  ]
+}
+```
+
+> **Note**: Results are ordered by `appointmentDate` ascending.
 
 ---
 
@@ -611,6 +659,44 @@ Cancel an appointment.
                                    │   completed  │
                                    └──────────────┘
 ```
+
+---
+
+## Implementation Notes
+
+### Backend (TICKET-006 - Completed)
+
+- Routes: `packages/backend/src/routes/appointment.routes.ts`
+- Controller: `packages/backend/src/controllers/appointment.controller.ts`
+- Service: `packages/backend/src/services/appointment.service.ts`
+- Validator: `packages/backend/src/validators/appointment.validator.ts`
+- Integration tests: `packages/backend/tests/integration/appointment.routes.test.ts`
+
+### Frontend (TICKET-007 - Completed)
+
+**Pages:**
+- `packages/frontend/src/pages/appointments/AppointmentsListPage.tsx` - List with filters
+- `packages/frontend/src/pages/appointments/NewAppointmentPage.tsx` - Create form
+- `packages/frontend/src/pages/appointments/AppointmentDetailPage.tsx` - View/manage
+- `packages/frontend/src/pages/dashboard/DashboardPage.tsx` - Today's appointments
+
+**Components:**
+- `packages/frontend/src/components/appointments/AppointmentCard.tsx`
+- `packages/frontend/src/components/appointments/AppointmentForm.tsx`
+- `packages/frontend/src/components/appointments/StatusBadge.tsx`
+- `packages/frontend/src/components/appointments/AppointmentTypeBadge.tsx`
+
+**Hooks & API:**
+- `packages/frontend/src/hooks/useAppointments.ts`
+- `packages/frontend/src/services/appointments.api.ts`
+- `packages/frontend/src/types/appointment.types.ts`
+
+### Business Rules
+
+1. **New appointments** default to `scheduled` status
+2. **Completed appointments** cannot be deleted
+3. **Status transitions** are validated (see Status Flow diagram above)
+4. Appointments are **provider-scoped** - providers can only see their own appointments
 
 ---
 
