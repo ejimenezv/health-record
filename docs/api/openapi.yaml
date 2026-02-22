@@ -1,0 +1,1765 @@
+openapi: 3.0.3
+info:
+  title: MedRecord AI API
+  description: |
+    REST API for the MedRecord AI Medical Record System MVP.
+
+    This API enables healthcare providers to:
+    - Manage patient records
+    - Create and track appointments
+    - Document medical encounters
+    - Use AI-powered transcription and field extraction
+
+    ## Authentication
+    All endpoints except `/auth/register` and `/auth/login` require a Bearer JWT token.
+
+    ## Base URL
+    - Development: `http://localhost:3001/api/v1`
+    - Production: `https://api.medrecord.app/api/v1`
+  version: 1.0.0
+  contact:
+    name: MedRecord AI Support
+    email: support@medrecord.app
+
+servers:
+  - url: http://localhost:3001/api/v1
+    description: Development server
+  - url: https://api.medrecord.app/api/v1
+    description: Production server
+
+tags:
+  - name: Authentication
+    description: User authentication and profile management
+  - name: Patients
+    description: Patient management operations
+  - name: Appointments
+    description: Appointment scheduling and management
+  - name: Medical Records
+    description: Clinical documentation
+  - name: Transcription
+    description: AI-powered transcription and field extraction
+
+paths:
+  # ============================================
+  # AUTHENTICATION
+  # ============================================
+  /auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register a new provider account
+      operationId: registerProvider
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Account created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '409':
+          description: Email already registered
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Login to get access token
+      operationId: loginProvider
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid credentials
+
+  /auth/me:
+    get:
+      tags:
+        - Authentication
+      summary: Get current user profile
+      operationId: getCurrentUser
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '401':
+          description: Unauthorized
+
+  /auth/profile:
+    patch:
+      tags:
+        - Authentication
+      summary: Update user profile
+      operationId: updateProfile
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProfileRequest'
+      responses:
+        '200':
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '401':
+          description: Unauthorized
+        '422':
+          description: Validation error
+
+  # ============================================
+  # PATIENTS
+  # ============================================
+  /patients:
+    get:
+      tags:
+        - Patients
+      summary: List all patients
+      operationId: listPatients
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: search
+          in: query
+          description: Search by name, phone, or email
+          schema:
+            type: string
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: List of patients
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientListResponse'
+
+    post:
+      tags:
+        - Patients
+      summary: Create a new patient
+      operationId: createPatient
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePatientRequest'
+      responses:
+        '201':
+          description: Patient created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientResponse'
+        '409':
+          description: Potential duplicate patient
+        '422':
+          description: Validation error
+
+  /patients/{id}:
+    get:
+      tags:
+        - Patients
+      summary: Get patient details
+      operationId: getPatient
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PatientId'
+      responses:
+        '200':
+          description: Patient details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientDetailResponse'
+        '404':
+          description: Patient not found
+
+    put:
+      tags:
+        - Patients
+      summary: Update patient
+      operationId: updatePatient
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PatientId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePatientRequest'
+      responses:
+        '200':
+          description: Patient updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientResponse'
+        '404':
+          description: Patient not found
+        '422':
+          description: Validation error
+
+    delete:
+      tags:
+        - Patients
+      summary: Delete patient (soft delete)
+      operationId: deletePatient
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PatientId'
+      responses:
+        '204':
+          description: Patient deleted
+        '404':
+          description: Patient not found
+
+  /patients/{id}/appointments:
+    get:
+      tags:
+        - Patients
+      summary: Get patient appointment history
+      operationId: getPatientAppointments
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PatientId'
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/AppointmentStatus'
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Patient appointments
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentListResponse'
+
+  # ============================================
+  # APPOINTMENTS
+  # ============================================
+  /appointments:
+    get:
+      tags:
+        - Appointments
+      summary: List all appointments
+      operationId: listAppointments
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: patientId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/AppointmentStatus'
+        - name: appointmentType
+          in: query
+          schema:
+            $ref: '#/components/schemas/AppointmentType'
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: List of appointments
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentListResponse'
+
+    post:
+      tags:
+        - Appointments
+      summary: Create a new appointment
+      operationId: createAppointment
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAppointmentRequest'
+      responses:
+        '201':
+          description: Appointment created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentResponse'
+        '404':
+          description: Patient not found
+        '422':
+          description: Validation error
+
+  /appointments/{id}:
+    get:
+      tags:
+        - Appointments
+      summary: Get appointment details
+      operationId: getAppointment
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/AppointmentId'
+        - name: includeRecord
+          in: query
+          schema:
+            type: boolean
+            default: true
+      responses:
+        '200':
+          description: Appointment details with medical record
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentDetailResponse'
+        '404':
+          description: Appointment not found
+
+    put:
+      tags:
+        - Appointments
+      summary: Update appointment
+      operationId: updateAppointment
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/AppointmentId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAppointmentRequest'
+      responses:
+        '200':
+          description: Appointment updated
+        '404':
+          description: Appointment not found
+
+    delete:
+      tags:
+        - Appointments
+      summary: Cancel appointment
+      operationId: cancelAppointment
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/AppointmentId'
+      responses:
+        '200':
+          description: Appointment cancelled
+        '404':
+          description: Appointment not found
+        '422':
+          description: Cannot cancel completed appointment
+
+  /appointments/{id}/status:
+    patch:
+      tags:
+        - Appointments
+      summary: Update appointment status
+      operationId: updateAppointmentStatus
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/AppointmentId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  $ref: '#/components/schemas/AppointmentStatus'
+      responses:
+        '200':
+          description: Status updated
+        '422':
+          description: Invalid status transition
+
+  # ============================================
+  # MEDICAL RECORDS
+  # ============================================
+  /appointments/{appointmentId}/record:
+    get:
+      tags:
+        - Medical Records
+      summary: Get medical record for appointment
+      operationId: getMedicalRecord
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/AppointmentIdPath'
+      responses:
+        '200':
+          description: Medical record
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MedicalRecordResponse'
+        '404':
+          description: Appointment not found
+
+    put:
+      tags:
+        - Medical Records
+      summary: Create or update medical record
+      operationId: upsertMedicalRecord
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/AppointmentIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MedicalRecordRequest'
+      responses:
+        '200':
+          description: Medical record saved
+        '201':
+          description: Medical record created
+        '404':
+          description: Appointment not found
+
+    patch:
+      tags:
+        - Medical Records
+      summary: Partial update medical record
+      operationId: patchMedicalRecord
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/AppointmentIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MedicalRecordRequest'
+      responses:
+        '200':
+          description: Medical record updated
+
+  /appointments/{appointmentId}/record/complete:
+    post:
+      tags:
+        - Medical Records
+      summary: Mark medical record as complete
+      operationId: completeMedicalRecord
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/AppointmentIdPath'
+      responses:
+        '200':
+          description: Record completed
+        '422':
+          description: Cannot complete without diagnosis
+
+  /appointments/{appointmentId}/record/symptoms:
+    post:
+      tags:
+        - Medical Records
+      summary: Add symptom to medical record
+      operationId: addSymptom
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/AppointmentIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSymptomRequest'
+      responses:
+        '201':
+          description: Symptom added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SymptomResponse'
+
+  /appointments/{appointmentId}/record/symptoms/{symptomId}:
+    patch:
+      tags:
+        - Medical Records
+      summary: Update symptom
+      operationId: updateSymptom
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/AppointmentIdPath'
+        - name: symptomId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSymptomRequest'
+      responses:
+        '200':
+          description: Symptom updated
+
+    delete:
+      tags:
+        - Medical Records
+      summary: Delete symptom
+      operationId: deleteSymptom
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/AppointmentIdPath'
+        - name: symptomId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Symptom deleted
+
+  /appointments/{appointmentId}/record/prescriptions:
+    post:
+      tags:
+        - Medical Records
+      summary: Add prescription to medical record
+      operationId: addPrescription
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/AppointmentIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePrescriptionRequest'
+      responses:
+        '201':
+          description: Prescription added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrescriptionResponse'
+
+  /appointments/{appointmentId}/record/prescriptions/{prescriptionId}:
+    patch:
+      tags:
+        - Medical Records
+      summary: Update prescription
+      operationId: updatePrescription
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/AppointmentIdPath'
+        - name: prescriptionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePrescriptionRequest'
+      responses:
+        '200':
+          description: Prescription updated
+
+    delete:
+      tags:
+        - Medical Records
+      summary: Delete prescription
+      operationId: deletePrescription
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/AppointmentIdPath'
+        - name: prescriptionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Prescription deleted
+
+  # ============================================
+  # TRANSCRIPTION
+  # ============================================
+  /appointments/{appointmentId}/transcription/start:
+    post:
+      tags:
+        - Transcription
+      summary: Start transcription session
+      operationId: startTranscription
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/AppointmentIdPath'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                language:
+                  type: string
+                  enum: [en, es]
+                  default: en
+                realTimeExtraction:
+                  type: boolean
+                  default: false
+      responses:
+        '200':
+          description: Transcription session started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TranscriptionSessionResponse'
+        '409':
+          description: Session already active
+
+  /appointments/{appointmentId}/transcription/audio:
+    post:
+      tags:
+        - Transcription
+      summary: Upload audio chunk
+      operationId: uploadAudioChunk
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/AppointmentIdPath'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - audio
+              properties:
+                audio:
+                  type: string
+                  format: binary
+                chunkIndex:
+                  type: integer
+                sessionId:
+                  type: string
+      responses:
+        '200':
+          description: Audio chunk received
+        '400':
+          description: Invalid audio format
+        '413':
+          description: Audio file too large
+
+  /appointments/{appointmentId}/transcription/stop:
+    post:
+      tags:
+        - Transcription
+      summary: Stop transcription session
+      operationId: stopTranscription
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/AppointmentIdPath'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                sessionId:
+                  type: string
+                saveAudio:
+                  type: boolean
+                  default: true
+      responses:
+        '200':
+          description: Transcription completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TranscriptionCompleteResponse'
+        '404':
+          description: No active session
+
+  /appointments/{appointmentId}/transcription:
+    get:
+      tags:
+        - Transcription
+      summary: Get transcription for appointment
+      operationId: getTranscription
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/AppointmentIdPath'
+        - name: includeSegments
+          in: query
+          schema:
+            type: boolean
+            default: true
+      responses:
+        '200':
+          description: Transcription data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TranscriptionResponse'
+
+  /appointments/{appointmentId}/extract-fields:
+    post:
+      tags:
+        - Transcription
+      summary: Extract medical fields from transcription
+      operationId: extractFields
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/AppointmentIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExtractFieldsRequest'
+      responses:
+        '200':
+          description: Fields extracted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExtractedFieldsResponse'
+        '422':
+          description: Extraction failed
+        '429':
+          description: Rate limit exceeded
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    PatientId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Patient ID
+
+    AppointmentId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Appointment ID
+
+    AppointmentIdPath:
+      name: appointmentId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Appointment ID
+
+    PageParam:
+      name: page
+      in: query
+      schema:
+        type: integer
+        default: 1
+        minimum: 1
+      description: Page number
+
+    LimitParam:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        default: 20
+        minimum: 1
+        maximum: 100
+      description: Items per page
+
+  schemas:
+    # Common
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        data:
+          type: object
+          nullable: true
+        message:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              message:
+                type: string
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        totalPages:
+          type: integer
+        hasNext:
+          type: boolean
+        hasPrev:
+          type: boolean
+
+    # Authentication
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    RegisterRequest:
+      type: object
+      required:
+        - email
+        - password
+        - firstName
+        - lastName
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        firstName:
+          type: string
+          minLength: 2
+          maxLength: 50
+        lastName:
+          type: string
+          minLength: 2
+          maxLength: 50
+        specialty:
+          type: string
+          maxLength: 100
+        licenseNumber:
+          type: string
+          maxLength: 50
+
+    AuthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            user:
+              $ref: '#/components/schemas/User'
+            accessToken:
+              type: string
+            expiresIn:
+              type: integer
+        message:
+          type: string
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        firstName:
+          type: string
+        lastName:
+          type: string
+        specialty:
+          type: string
+          nullable: true
+        licenseNumber:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    UserResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: '#/components/schemas/User'
+        message:
+          type: string
+
+    UpdateProfileRequest:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        specialty:
+          type: string
+        licenseNumber:
+          type: string
+        phone:
+          type: string
+
+    # Patient
+    Sex:
+      type: string
+      enum:
+        - male
+        - female
+        - other
+
+    AllergySeverity:
+      type: string
+      enum:
+        - mild
+        - moderate
+        - severe
+        - life_threatening
+
+    Allergy:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        allergen:
+          type: string
+        reaction:
+          type: string
+          nullable: true
+        severity:
+          $ref: '#/components/schemas/AllergySeverity'
+        onsetDate:
+          type: string
+          format: date
+          nullable: true
+
+    ChronicCondition:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        conditionName:
+          type: string
+        diagnosisDate:
+          type: string
+          format: date
+          nullable: true
+        status:
+          type: string
+        notes:
+          type: string
+          nullable: true
+
+    Patient:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        firstName:
+          type: string
+        lastName:
+          type: string
+        dateOfBirth:
+          type: string
+          format: date
+        sex:
+          $ref: '#/components/schemas/Sex'
+        phone:
+          type: string
+        email:
+          type: string
+          nullable: true
+        address:
+          type: string
+          nullable: true
+        emergencyContactName:
+          type: string
+        emergencyContactPhone:
+          type: string
+        emergencyContactRelationship:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    PatientListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Patient'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+        message:
+          type: string
+
+    PatientResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: '#/components/schemas/Patient'
+        message:
+          type: string
+
+    PatientDetailResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          allOf:
+            - $ref: '#/components/schemas/Patient'
+            - type: object
+              properties:
+                allergies:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Allergy'
+                chronicConditions:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/ChronicCondition'
+        message:
+          type: string
+
+    CreatePatientRequest:
+      type: object
+      required:
+        - firstName
+        - lastName
+        - dateOfBirth
+        - sex
+        - phone
+        - emergencyContactName
+        - emergencyContactPhone
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        dateOfBirth:
+          type: string
+          format: date
+        sex:
+          $ref: '#/components/schemas/Sex'
+        phone:
+          type: string
+        email:
+          type: string
+          format: email
+        address:
+          type: string
+        emergencyContactName:
+          type: string
+        emergencyContactPhone:
+          type: string
+        emergencyContactRelationship:
+          type: string
+
+    UpdatePatientRequest:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        address:
+          type: string
+        emergencyContactName:
+          type: string
+        emergencyContactPhone:
+          type: string
+        emergencyContactRelationship:
+          type: string
+
+    # Appointment
+    AppointmentType:
+      type: string
+      enum:
+        - new_patient
+        - follow_up
+        - routine_checkup
+        - sick_visit
+        - telehealth
+
+    AppointmentStatus:
+      type: string
+      enum:
+        - scheduled
+        - checked_in
+        - in_progress
+        - completed
+        - cancelled
+        - no_show
+
+    Appointment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        patientId:
+          type: string
+          format: uuid
+        providerId:
+          type: string
+          format: uuid
+        appointmentDate:
+          type: string
+          format: date-time
+        appointmentType:
+          $ref: '#/components/schemas/AppointmentType'
+        reasonForVisit:
+          type: string
+          nullable: true
+        durationMinutes:
+          type: integer
+        status:
+          $ref: '#/components/schemas/AppointmentStatus'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    AppointmentListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Appointment'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+        message:
+          type: string
+
+    AppointmentResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: '#/components/schemas/Appointment'
+        message:
+          type: string
+
+    AppointmentDetailResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          allOf:
+            - $ref: '#/components/schemas/Appointment'
+            - type: object
+              properties:
+                patient:
+                  $ref: '#/components/schemas/Patient'
+                medicalRecord:
+                  $ref: '#/components/schemas/MedicalRecord'
+        message:
+          type: string
+
+    CreateAppointmentRequest:
+      type: object
+      required:
+        - patientId
+        - appointmentDate
+        - appointmentType
+      properties:
+        patientId:
+          type: string
+          format: uuid
+        appointmentDate:
+          type: string
+          format: date-time
+        appointmentType:
+          $ref: '#/components/schemas/AppointmentType'
+        reasonForVisit:
+          type: string
+        durationMinutes:
+          type: integer
+          default: 30
+
+    UpdateAppointmentRequest:
+      type: object
+      properties:
+        appointmentDate:
+          type: string
+          format: date-time
+        appointmentType:
+          $ref: '#/components/schemas/AppointmentType'
+        reasonForVisit:
+          type: string
+        durationMinutes:
+          type: integer
+
+    # Medical Record
+    Symptom:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        symptomName:
+          type: string
+        bodySite:
+          type: string
+          nullable: true
+        severity:
+          type: integer
+          minimum: 1
+          maximum: 10
+          nullable: true
+        duration:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        isAIExtracted:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    Prescription:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        medicationName:
+          type: string
+        strength:
+          type: string
+        dosage:
+          type: string
+        frequency:
+          type: string
+        duration:
+          type: string
+          nullable: true
+        quantity:
+          type: integer
+          nullable: true
+        refills:
+          type: integer
+        instructions:
+          type: string
+        indication:
+          type: string
+          nullable: true
+        isAIExtracted:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    MedicalRecord:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        appointmentId:
+          type: string
+          format: uuid
+        chiefComplaint:
+          type: string
+          nullable: true
+        historyOfPresentIllness:
+          type: string
+          nullable: true
+        physicalExamNotes:
+          type: string
+          nullable: true
+        diagnosis:
+          type: string
+          nullable: true
+        diagnosisNotes:
+          type: string
+          nullable: true
+        treatmentPlan:
+          type: string
+          nullable: true
+        followUpInstructions:
+          type: string
+          nullable: true
+        patientEducation:
+          type: string
+          nullable: true
+        transcript:
+          type: string
+          nullable: true
+        isAIGenerated:
+          type: boolean
+        isDraft:
+          type: boolean
+        symptoms:
+          type: array
+          items:
+            $ref: '#/components/schemas/Symptom'
+        prescriptions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Prescription'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    MedicalRecordResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: '#/components/schemas/MedicalRecord'
+        message:
+          type: string
+
+    MedicalRecordRequest:
+      type: object
+      properties:
+        chiefComplaint:
+          type: string
+        historyOfPresentIllness:
+          type: string
+        physicalExamNotes:
+          type: string
+        diagnosis:
+          type: string
+        diagnosisNotes:
+          type: string
+        treatmentPlan:
+          type: string
+        followUpInstructions:
+          type: string
+        patientEducation:
+          type: string
+        isAIGenerated:
+          type: boolean
+        isDraft:
+          type: boolean
+
+    CreateSymptomRequest:
+      type: object
+      required:
+        - symptomName
+      properties:
+        symptomName:
+          type: string
+        bodySite:
+          type: string
+        severity:
+          type: integer
+          minimum: 1
+          maximum: 10
+        duration:
+          type: string
+        notes:
+          type: string
+        isAIExtracted:
+          type: boolean
+          default: false
+
+    UpdateSymptomRequest:
+      type: object
+      properties:
+        symptomName:
+          type: string
+        bodySite:
+          type: string
+        severity:
+          type: integer
+        duration:
+          type: string
+        notes:
+          type: string
+
+    SymptomResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: '#/components/schemas/Symptom'
+        message:
+          type: string
+
+    CreatePrescriptionRequest:
+      type: object
+      required:
+        - medicationName
+        - strength
+        - dosage
+        - frequency
+        - instructions
+      properties:
+        medicationName:
+          type: string
+        strength:
+          type: string
+        dosage:
+          type: string
+        frequency:
+          type: string
+        duration:
+          type: string
+        quantity:
+          type: integer
+        refills:
+          type: integer
+          default: 0
+        instructions:
+          type: string
+        indication:
+          type: string
+        isAIExtracted:
+          type: boolean
+          default: false
+
+    UpdatePrescriptionRequest:
+      type: object
+      properties:
+        medicationName:
+          type: string
+        strength:
+          type: string
+        dosage:
+          type: string
+        frequency:
+          type: string
+        duration:
+          type: string
+        quantity:
+          type: integer
+        refills:
+          type: integer
+        instructions:
+          type: string
+        indication:
+          type: string
+
+    PrescriptionResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: '#/components/schemas/Prescription'
+        message:
+          type: string
+
+    # Transcription
+    TranscriptionSessionResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            sessionId:
+              type: string
+            wsUrl:
+              type: string
+              format: uri
+            expiresAt:
+              type: string
+              format: date-time
+            config:
+              type: object
+              properties:
+                sampleRate:
+                  type: integer
+                channelCount:
+                  type: integer
+                mimeType:
+                  type: string
+                maxDuration:
+                  type: integer
+                chunkInterval:
+                  type: integer
+        message:
+          type: string
+
+    TranscriptionSegment:
+      type: object
+      properties:
+        startTime:
+          type: number
+        endTime:
+          type: number
+        text:
+          type: string
+        speaker:
+          type: string
+          enum:
+            - doctor
+            - patient
+            - unknown
+
+    TranscriptionResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            transcript:
+              type: string
+            segments:
+              type: array
+              items:
+                $ref: '#/components/schemas/TranscriptionSegment'
+            duration:
+              type: number
+            language:
+              type: string
+            audioFileUrl:
+              type: string
+              nullable: true
+            createdAt:
+              type: string
+              format: date-time
+        message:
+          type: string
+
+    TranscriptionCompleteResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            sessionId:
+              type: string
+            status:
+              type: string
+            transcript:
+              type: string
+            segments:
+              type: array
+              items:
+                $ref: '#/components/schemas/TranscriptionSegment'
+            duration:
+              type: number
+            audioFileUrl:
+              type: string
+              nullable: true
+            processingTime:
+              type: integer
+        message:
+          type: string
+
+    ExtractFieldsRequest:
+      type: object
+      required:
+        - transcriptionText
+      properties:
+        transcriptionText:
+          type: string
+        previousContext:
+          type: string
+        language:
+          type: string
+          enum:
+            - en
+            - es
+          default: en
+        options:
+          type: object
+          properties:
+            includeConfidence:
+              type: boolean
+              default: true
+            includeSourceText:
+              type: boolean
+              default: true
+            strictMode:
+              type: boolean
+              default: false
+
+    ExtractedFieldsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            extractionId:
+              type: string
+            chiefComplaint:
+              type: object
+              nullable: true
+            symptoms:
+              type: array
+              items:
+                type: object
+            diagnosis:
+              type: object
+              nullable: true
+            prescriptions:
+              type: array
+              items:
+                type: object
+            treatmentPlan:
+              type: object
+              nullable: true
+            overallConfidence:
+              type: number
+            processingTime:
+              type: integer
+        message:
+          type: string
+
+security:
+  - bearerAuth: []
