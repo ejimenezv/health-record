@@ -1,6 +1,7 @@
-import { Router } from 'express';
+import { Router, type IRouter } from 'express';
+import authRoutes from './auth.routes.js';
 
-const router = Router();
+const router: IRouter = Router();
 
 // Health check
 router.get('/health', (_req, res) => {
@@ -10,5 +11,8 @@ router.get('/health', (_req, res) => {
     version: '0.1.0',
   });
 });
+
+// API routes
+router.use('/auth', authRoutes);
 
 export default router;
