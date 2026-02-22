@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+.next/
+
+# Package manager
+pnpm-lock.yaml
+package-lock.json
+
+# Generated
+*.generated.ts
+prisma/migrations/
+
+# IDE
+.idea/
+.vscode/
+
+# Coverage
+coverage/
+
+# Misc
+*.min.js
+*.min.css

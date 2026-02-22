@@ -1,0 +1,239 @@
+// prisma/schema.prisma
+// Medical Record System MVP - Prisma Schema
+
+// ============================================
+// DATABASE CONFIGURATION
+// ============================================
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum Sex {
+  male
+  female
+  other
+}
+
+enum AllergySeverity {
+  mild
+  moderate
+  severe
+  life_threatening
+}
+
+enum AppointmentType {
+  new_patient
+  follow_up
+  routine_checkup
+  sick_visit
+  telehealth
+}
+
+enum AppointmentStatus {
+  scheduled
+  checked_in
+  in_progress
+  completed
+  cancelled
+  no_show
+}
+
+// ============================================
+// MODELS
+// ============================================
+
+/// Healthcare provider (doctor) who uses the system
+model Provider {
+  id            String        @id @default(uuid())
+  email         String        @unique
+  passwordHash  String
+  firstName     String
+  lastName      String
+  specialty     String?
+  licenseNumber String?
+  phone         String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  appointments  Appointment[]
+
+  @@map("providers")
+}
+
+/// Patient receiving medical care
+model Patient {
+  id                           String             @id @default(uuid())
+  firstName                    String
+  lastName                     String
+  dateOfBirth                  DateTime           @db.Date
+  sex                          Sex
+  phone                        String
+  email                        String?
+  address                      String?
+  emergencyContactName         String
+  emergencyContactPhone        String
+  emergencyContactRelationship String?
+  createdAt                    DateTime           @default(now())
+  updatedAt                    DateTime           @updatedAt
+  allergies                    Allergy[]
+  chronicConditions            ChronicCondition[]
+  appointments                 Appointment[]
+
+  @@index([lastName, firstName])
+  @@index([phone])
+  @@index([email])
+  @@map("patients")
+}
+
+/// Patient allergy information
+model Allergy {
+  id        String           @id @default(uuid())
+  patientId String
+  patient   Patient          @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  allergen  String
+  reaction  String?
+  severity  AllergySeverity?
+  onsetDate DateTime?        @db.Date
+  createdAt DateTime         @default(now())
+
+  @@index([patientId])
+  @@map("allergies")
+}
+
+/// Patient chronic medical condition
+model ChronicCondition {
+  id            String    @id @default(uuid())
+  patientId     String
+  patient       Patient   @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  conditionName String
+  diagnosisDate DateTime? @db.Date
+  status        String?   @default("active")
+  notes         String?
+  createdAt     DateTime  @default(now())
+
+  @@index([patientId])
+  @@map("chronic_conditions")
+}
+
+/// Patient appointment/visit
+model Appointment {
+  id              String            @id @default(uuid())
+  patientId       String
+  patient         Patient           @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  providerId      String
+  provider        Provider          @relation(fields: [providerId], references: [id])
+  appointmentDate DateTime
+  appointmentType AppointmentType
+  reasonForVisit  String?
+  durationMinutes Int?              @default(30)
+  status          AppointmentStatus @default(scheduled)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  medicalRecord   MedicalRecord?
+  vitalSigns      VitalSigns?
+
+  @@index([patientId])
+  @@index([providerId])
+  @@index([appointmentDate])
+  @@index([status])
+  @@map("appointments")
+}
+
+/// Medical record for an appointment (SOAP format)
+model MedicalRecord {
+  id                      String         @id @default(uuid())
+  appointmentId           String         @unique
+  appointment             Appointment    @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  // Subjective
+  chiefComplaint          String?
+  historyOfPresentIllness String?        @db.Text
+  // Objective
+  physicalExamNotes       String?        @db.Text
+  // Assessment
+  diagnosis               String?
+  diagnosisNotes          String?        @db.Text
+  // Plan
+  treatmentPlan           String?        @db.Text
+  followUpInstructions    String?        @db.Text
+  patientEducation        String?        @db.Text
+  // AI Integration
+  audioFileUrl            String?
+  transcript              String?        @db.Text
+  isAIGenerated           Boolean        @default(false)
+  isDraft                 Boolean        @default(true)
+  // Timestamps
+  createdAt               DateTime       @default(now())
+  updatedAt               DateTime       @updatedAt
+  // Relations
+  symptoms                Symptom[]
+  prescriptions           Prescription[]
+
+  @@map("medical_records")
+}
+
+/// Symptom recorded during appointment
+model Symptom {
+  id              String        @id @default(uuid())
+  medicalRecordId String
+  medicalRecord   MedicalRecord @relation(fields: [medicalRecordId], references: [id], onDelete: Cascade)
+  symptomName     String
+  bodySite        String?
+  severity        Int?          @db.SmallInt
+  duration        String?
+  notes           String?       @db.Text
+  isAIExtracted   Boolean       @default(false)
+  createdAt       DateTime      @default(now())
+
+  @@index([medicalRecordId])
+  @@map("symptoms")
+}
+
+/// Medication prescription
+model Prescription {
+  id              String        @id @default(uuid())
+  medicalRecordId String
+  medicalRecord   MedicalRecord @relation(fields: [medicalRecordId], references: [id], onDelete: Cascade)
+  medicationName  String
+  strength        String
+  dosage          String
+  frequency       String
+  duration        String?
+  quantity        Int?
+  refills         Int?          @default(0)
+  instructions    String        @db.Text
+  indication      String?
+  isAIExtracted   Boolean       @default(false)
+  createdAt       DateTime      @default(now())
+
+  @@index([medicalRecordId])
+  @@map("prescriptions")
+}
+
+/// Vital signs recorded during appointment
+model VitalSigns {
+  id                     String      @id @default(uuid())
+  appointmentId          String      @unique
+  appointment            Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  bloodPressureSystolic  Int?
+  bloodPressureDiastolic Int?
+  heartRate              Int?
+  temperature            Decimal?    @db.Decimal(4, 1)
+  respiratoryRate        Int?
+  oxygenSaturation       Int?
+  weight                 Decimal?    @db.Decimal(5, 2)
+  height                 Decimal?    @db.Decimal(5, 2)
+  bmi                    Decimal?    @db.Decimal(4, 1)
+  painLevel              Int?        @db.SmallInt
+  recordedAt             DateTime    @default(now())
+
+  @@map("vital_signs")
+}
