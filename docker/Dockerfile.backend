@@ -42,9 +42,8 @@ RUN pnpm install --prod
 COPY --from=builder /app/packages/backend/dist ./dist
 COPY --from=builder /app/packages/backend/prisma ./prisma
 
-# Copy Prisma generated client from builder
-COPY --from=builder /app/node_modules/.pnpm/@prisma+client@*/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/node_modules/.pnpm/@prisma+client@*/node_modules/@prisma ./node_modules/@prisma
+# Generate Prisma client in production stage
+RUN npx prisma generate
 
 # Create uploads directory
 RUN mkdir -p uploads/audio && chown -R nodejs:nodejs uploads
