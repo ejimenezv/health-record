@@ -4,6 +4,8 @@ import patientRoutes from './patient.routes.js';
 import appointmentRoutes from './appointment.routes.js';
 import allergyRoutes from './allergy.routes.js';
 import chronicConditionRoutes from './chronicCondition.routes.js';
+import medicalRecordRoutes from './medical-record.routes.js';
+import transcriptionRoutes from './transcription.routes.js';
 
 const router: IRouter = Router();
 
@@ -22,5 +24,7 @@ router.use('/patients', patientRoutes);
 router.use('/appointments', appointmentRoutes);
 router.use(allergyRoutes);
 router.use(chronicConditionRoutes);
+router.use(medicalRecordRoutes);
+router.use(transcriptionRoutes);
 
 export default router;

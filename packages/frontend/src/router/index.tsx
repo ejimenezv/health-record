@@ -8,6 +8,7 @@ import { EditPatientPage } from '../pages/patients/EditPatientPage';
 import { AppointmentsListPage } from '../pages/appointments/AppointmentsListPage';
 import { NewAppointmentPage } from '../pages/appointments/NewAppointmentPage';
 import { AppointmentDetailPage } from '../pages/appointments/AppointmentDetailPage';
+import { MedicalRecordPage } from '../pages/appointments/MedicalRecordPage';
 import { ProtectedRoute } from '../components/auth/ProtectedRoute';
 import { MainLayout } from '../components/layout/MainLayout';
 
@@ -60,6 +61,10 @@ export const router: RouterProviderProps['router'] = createBrowserRouter(
         {
           path: 'appointments/:id',
           element: <AppointmentDetailPage />,
+        },
+        {
+          path: 'appointments/:id/record',
+          element: <MedicalRecordPage />,
         },
       ],
     },

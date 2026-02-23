@@ -182,33 +182,23 @@ export function AppointmentDetailPage() {
             <CardTitle className="text-lg">Expediente Medico</CardTitle>
           </CardHeader>
           <CardContent>
-            {appointment.medicalRecord ? (
-              <div>
-                <p className="text-gray-700 mb-2">
+            <div className="space-y-3">
+              {appointment.medicalRecord ? (
+                <p className="text-gray-700">
                   Esta cita tiene un expediente medico asociado.
                 </p>
-                <Button
-                  variant="outline"
-                  onClick={() => navigate(`/medical-records/${appointment.medicalRecord!.id}`)}
-                >
-                  Ver Expediente
-                </Button>
-              </div>
-            ) : (
-              <div>
-                <p className="text-gray-500 italic mb-2">
+              ) : (
+                <p className="text-gray-500 italic">
                   No hay expediente medico para esta cita.
                 </p>
-                {appointment.status === 'in_progress' && (
-                  <Button
-                    variant="outline"
-                    onClick={() => navigate(`/medical-records/new?appointmentId=${appointment.id}`)}
-                  >
-                    Crear Expediente
-                  </Button>
-                )}
-              </div>
-            )}
+              )}
+              <Button
+                variant="outline"
+                onClick={() => navigate(`/appointments/${appointment.id}/record`)}
+              >
+                {appointment.medicalRecord ? 'Ver Expediente' : 'Documentar Consulta'}
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>

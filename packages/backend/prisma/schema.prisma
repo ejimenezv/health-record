@@ -141,6 +141,7 @@ model Appointment {
   updatedAt       DateTime          @updatedAt
   medicalRecord   MedicalRecord?
   vitalSigns      VitalSigns?
+  transcription   Transcription?
 
   @@index([patientId])
   @@index([providerId])
@@ -204,13 +205,13 @@ model Prescription {
   medicalRecordId String
   medicalRecord   MedicalRecord @relation(fields: [medicalRecordId], references: [id], onDelete: Cascade)
   medicationName  String
-  strength        String
+  strength        String?
   dosage          String
   frequency       String
   duration        String?
   quantity        Int?
   refills         Int?          @default(0)
-  instructions    String        @db.Text
+  instructions    String?       @db.Text
   indication      String?
   isAIExtracted   Boolean       @default(false)
   createdAt       DateTime      @default(now())
@@ -237,4 +238,21 @@ model VitalSigns {
   recordedAt             DateTime    @default(now())
 
   @@map("vital_signs")
+}
+
+/// AI transcription session for an appointment
+model Transcription {
+  id              String      @id @default(uuid())
+  appointmentId   String      @unique
+  appointment     Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  fullText        String?     @db.Text
+  language        String?     @default("es")
+  durationSeconds Int?
+  status          String      @default("pending") // pending, recording, processing, completed, error, cancelled
+  startedAt       DateTime?
+  completedAt     DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@map("transcriptions")
 }
