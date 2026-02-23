@@ -225,4 +225,4 @@ MIT
 
 ## Autor
 
-Eduardo Jiménez Vázquez - AI4Devs Final Project
+Enrique Jiménez Vázquez - AI4Devs Final Project
