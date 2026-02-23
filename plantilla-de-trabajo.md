@@ -15,7 +15,7 @@
 
 ### **0.1. Tu nombre completo:**
 
-Eduardo Jiménez Vázquez - enrique.jimenez@sicuentame.com
+Enrique Jiménez Vázquez - enrique.jimenez@sicuentame.com
 
 ### **0.2. Nombre del proyecto:**
 
