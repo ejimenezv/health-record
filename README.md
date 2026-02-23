@@ -2,6 +2,21 @@
 
 Sistema de gestión de historiales médicos con transcripción de citas mediante IA para médicos.
 
+---
+
+## Entrega Final - AI4Devs
+
+> **Para los revisores del proyecto**: Los documentos de entrega que cumplen con las plantillas requeridas se encuentran en:
+>
+> - **[README-ENTREGA.md](README-ENTREGA.md)** - Documentación del proyecto (plantilla-de-trabajo.md)
+> - **[PROMPTS-ENTREGA.md](PROMPTS-ENTREGA.md)** - Prompts utilizados en el desarrollo (plantilla-prompts.md)
+>
+> **Demo en vivo**: [https://medrecord.enjimenez.com](https://medrecord.enjimenez.com)
+>
+> **Credenciales de prueba**: `doctor@example.com` / `password123`
+
+---
+
 ## Características Principales
 
 - **Gestión de Pacientes**: CRUD completo de pacientes con historial médico
