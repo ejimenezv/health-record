@@ -218,48 +218,197 @@ Los servicios de IA proporcionan las capacidades de transcripción de audio y ex
 
 ## 2.3. Descripción de alto nivel del proyecto y estructura de ficheros
 
+El proyecto sigue una arquitectura de monorepo usando pnpm workspaces, con el frontend y backend como paquetes separados dentro de `packages/`.
+
 ```
-medrecord-ai/
-├── frontend/                      # Aplicación React
-│   ├── src/
-│   │   ├── components/           # Componentes reutilizables
-│   │   ├── pages/                # Páginas/vistas
-│   │   ├── hooks/                # Custom hooks
-│   │   ├── services/             # Clientes API
-│   │   ├── context/              # Contextos React
-│   │   ├── types/                # Definiciones TypeScript
-│   │   └── utils/                # Utilidades
-│   ├── public/                   # Assets estáticos
-│   ├── package.json
-│   └── vite.config.ts
+health-record/
+├── packages/
+│   ├── backend/                      # API Node.js + Express
+│   │   ├── src/
+│   │   │   ├── app.ts               # Configuración Express
+│   │   │   ├── index.ts             # Entry point
+│   │   │   ├── config/
+│   │   │   │   └── database.ts      # Configuración Prisma
+│   │   │   ├── controllers/         # Controladores HTTP
+│   │   │   │   ├── allergy.controller.ts
+│   │   │   │   ├── appointment.controller.ts
+│   │   │   │   ├── auth.controller.ts
+│   │   │   │   ├── chronicCondition.controller.ts
+│   │   │   │   ├── medical-record.controller.ts
+│   │   │   │   └── patient.controller.ts
+│   │   │   ├── middleware/
+│   │   │   │   ├── auth.middleware.ts
+│   │   │   │   └── error.middleware.ts
+│   │   │   ├── routes/              # Definición de endpoints
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── allergy.routes.ts
+│   │   │   │   ├── appointment.routes.ts
+│   │   │   │   ├── auth.routes.ts
+│   │   │   │   ├── chronicCondition.routes.ts
+│   │   │   │   ├── medical-record.routes.ts
+│   │   │   │   ├── patient.routes.ts
+│   │   │   │   └── transcription.routes.ts
+│   │   │   ├── services/            # Lógica de negocio
+│   │   │   │   ├── ai/
+│   │   │   │   │   ├── gpt.service.ts      # Extracción con GPT-4
+│   │   │   │   │   └── whisper.service.ts  # Transcripción
+│   │   │   │   ├── allergy.service.ts
+│   │   │   │   ├── appointment.service.ts
+│   │   │   │   ├── auth.service.ts
+│   │   │   │   ├── chronicCondition.service.ts
+│   │   │   │   ├── medical-record.service.ts
+│   │   │   │   ├── patient.service.ts
+│   │   │   │   ├── transcription.service.ts
+│   │   │   │   └── vital-signs.service.ts
+│   │   │   ├── validators/          # Schemas Zod
+│   │   │   │   ├── allergy.validator.ts
+│   │   │   │   ├── appointment.validator.ts
+│   │   │   │   ├── auth.validator.ts
+│   │   │   │   ├── chronicCondition.validator.ts
+│   │   │   │   ├── medical-record.validator.ts
+│   │   │   │   └── patient.validator.ts
+│   │   │   ├── websocket/
+│   │   │   │   └── transcription.handler.ts
+│   │   │   ├── types/
+│   │   │   │   └── ai.types.ts
+│   │   │   └── utils/
+│   │   │       └── jwt.ts
+│   │   ├── prisma/
+│   │   │   ├── schema.prisma        # Esquema de BD
+│   │   │   ├── seed.ts              # Datos de prueba
+│   │   │   └── migrations/          # Migraciones
+│   │   ├── package.json
+│   │   └── tsconfig.json
+│   │
+│   └── frontend/                    # App React + Vite
+│       ├── src/
+│       │   ├── App.tsx
+│       │   ├── main.tsx
+│       │   ├── index.css
+│       │   ├── components/
+│       │   │   ├── appointments/    # Componentes de citas
+│       │   │   │   ├── AppointmentCard.tsx
+│       │   │   │   ├── AppointmentForm.tsx
+│       │   │   │   ├── AppointmentTypeBadge.tsx
+│       │   │   │   ├── StatusBadge.tsx
+│       │   │   │   └── index.ts
+│       │   │   ├── auth/
+│       │   │   │   └── ProtectedRoute.tsx
+│       │   │   ├── layout/
+│       │   │   │   └── MainLayout.tsx
+│       │   │   ├── medical-record/
+│       │   │   │   ├── DiagnosisSection.tsx
+│       │   │   │   ├── PrescriptionsSection.tsx
+│       │   │   │   ├── SymptomsSection.tsx
+│       │   │   │   └── index.ts
+│       │   │   ├── transcription/   # Panel de transcripción IA
+│       │   │   │   ├── AIExtractionStatus.tsx
+│       │   │   │   ├── AudioRecorder.tsx
+│       │   │   │   ├── TranscriptionDisplay.tsx
+│       │   │   │   ├── TranscriptionPanel.tsx
+│       │   │   │   └── index.ts
+│       │   │   └── ui/              # Componentes shadcn/ui
+│       │   │       ├── ai-badge.tsx
+│       │   │       ├── alert.tsx
+│       │   │       ├── button.tsx
+│       │   │       ├── card.tsx
+│       │   │       ├── input.tsx
+│       │   │       ├── label.tsx
+│       │   │       ├── scroll-area.tsx
+│       │   │       ├── select.tsx
+│       │   │       └── textarea.tsx
+│       │   ├── pages/
+│       │   │   ├── appointments/
+│       │   │   │   ├── AppointmentDetailPage.tsx
+│       │   │   │   ├── AppointmentsListPage.tsx
+│       │   │   │   ├── MedicalRecordPage.tsx
+│       │   │   │   ├── NewAppointmentPage.tsx
+│       │   │   │   └── index.ts
+│       │   │   ├── auth/
+│       │   │   │   └── LoginPage.tsx
+│       │   │   ├── dashboard/
+│       │   │   │   └── DashboardPage.tsx
+│       │   │   └── patients/
+│       │   │       ├── EditPatientPage.tsx
+│       │   │       ├── NewPatientPage.tsx
+│       │   │       ├── PatientDetailPage.tsx
+│       │   │       └── PatientsListPage.tsx
+│       │   ├── hooks/               # Custom hooks
+│       │   │   ├── useAllergies.ts
+│       │   │   ├── useAppointments.ts
+│       │   │   ├── useAudioRecorder.ts
+│       │   │   ├── useChronicConditions.ts
+│       │   │   ├── useMedicalRecord.ts
+│       │   │   ├── usePatients.ts
+│       │   │   └── useTranscription.ts
+│       │   ├── services/            # API clients
+│       │   │   ├── api.ts           # Axios instance
+│       │   │   ├── allergies.api.ts
+│       │   │   ├── appointments.api.ts
+│       │   │   ├── auth.api.ts
+│       │   │   ├── chronicConditions.api.ts
+│       │   │   ├── medical-records.api.ts
+│       │   │   └── patients.api.ts
+│       │   ├── store/
+│       │   │   └── auth.store.ts    # Zustand auth store
+│       │   ├── types/
+│       │   │   ├── appointment.types.ts
+│       │   │   ├── auth.types.ts
+│       │   │   ├── common.types.ts
+│       │   │   ├── medical-records.types.ts
+│       │   │   └── patient.types.ts
+│       │   ├── router/
+│       │   │   └── index.tsx
+│       │   └── lib/
+│       │       └── utils.ts
+│       ├── package.json
+│       ├── vite.config.ts
+│       ├── tailwind.config.js
+│       └── tsconfig.json
 │
-├── backend/                       # Servidor API
-│   ├── src/
-│   │   ├── routes/               # Definición de endpoints
-│   │   ├── middleware/           # Middleware Express
-│   │   ├── services/             # Lógica de negocio
-│   │   ├── lib/                  # Clientes (Prisma, OpenAI)
-│   │   ├── utils/                # Utilidades
-│   │   └── types/                # Definiciones TypeScript
-│   ├── prisma/
-│   │   ├── schema.prisma         # Esquema de BD
-│   │   └── migrations/           # Migraciones
-│   └── package.json
+├── docker/                          # Configuración Docker
+│   ├── docker-compose.yml           # Desarrollo (PostgreSQL)
+│   ├── docker-compose.prod.yml      # Producción completa
+│   ├── Dockerfile.backend
+│   ├── Dockerfile.frontend
+│   ├── nginx.conf                   # Configuración Nginx
+│   └── nginx.frontend.conf
 │
-├── docker/                        # Configuraciones Docker
-│   ├── nginx/
-│   └── postgres/
+├── docs/                            # Documentación completa
+│   ├── product/                     # Definición del producto
+│   ├── architecture/                # Arquitectura del sistema
+│   ├── data-model/                  # Modelo de datos y entidades
+│   ├── api/                         # Documentación API REST
+│   ├── frontend/                    # Especificaciones frontend
+│   ├── testing/                     # Estrategia de tests
+│   ├── tickets/                     # Tickets de implementación
+│   ├── implementation/              # Historial de implementación
+│   ├── deployment/                  # Guía de despliegue
+│   ├── deliverables/                # Entregables finales
+│   └── screenshots/                 # Capturas de pantalla
 │
-├── docs/                          # Documentación
-│   ├── architecture/
-│   ├── product/
-│   ├── stories/
-│   └── deliverables/
-│
-├── docker-compose.yml             # Orquestación desarrollo
-├── docker-compose.prod.yml        # Orquestación producción
-└── README.md
+├── prompts/                         # Prompts de desarrollo
+├── .env.example                     # Variables de entorno ejemplo
+├── package.json                     # Monorepo root
+├── pnpm-workspace.yaml              # Configuración pnpm workspaces
+├── prompts.md                       # Documentación de prompts IA
+└── README.md                        # Documentación principal
 ```
+
+### Descripción de Carpetas Principales
+
+| Carpeta | Propósito |
+|---------|-----------|
+| `packages/backend/src/controllers` | Controladores HTTP que manejan requests/responses |
+| `packages/backend/src/services` | Lógica de negocio, incluyendo integración con IA |
+| `packages/backend/src/services/ai` | Servicios de OpenAI (Whisper y GPT-4) |
+| `packages/backend/src/validators` | Schemas Zod para validación de entrada |
+| `packages/backend/src/websocket` | Handlers para transcripción en tiempo real |
+| `packages/frontend/src/components` | Componentes React organizados por feature |
+| `packages/frontend/src/hooks` | Custom hooks para lógica reutilizable |
+| `packages/frontend/src/services` | Clientes API con Axios |
+| `packages/frontend/src/store` | Estado global con Zustand |
+| `docker/` | Configuraciones Docker para desarrollo y producción |
 
 ---
 

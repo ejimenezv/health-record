@@ -256,129 +256,180 @@ La interfaz guía al médico a través de un flujo natural que refleja el proces
 
 ### 1.4. Instrucciones de Instalación
 
-> **Nota**: Estas son instrucciones preliminares que serán completadas y verificadas después de la implementación.
-
 #### Requisitos Previos
 
-| Requisito | Versión |
-|-----------|---------|
-| Node.js | 20.x LTS |
-| npm o pnpm | 9.x / 8.x |
-| PostgreSQL | 15.x |
-| Navegador moderno | Chrome/Firefox/Safari/Edge |
+| Requisito | Versión | Notas |
+|-----------|---------|-------|
+| Node.js | 20.x LTS | Requerido para ejecutar el proyecto |
+| pnpm | 9.x | Gestor de paquetes (instalable con `npm i -g pnpm`) |
+| Docker Desktop | Última versión | Para PostgreSQL en desarrollo |
+| Navegador moderno | Chrome/Firefox/Safari/Edge | Últimas 2 versiones |
 
 #### Claves de API Requeridas
 
 | Servicio | Variable de Entorno | Obtención |
 |----------|---------------------|-----------|
 | OpenAI | `OPENAI_API_KEY` | https://platform.openai.com/api-keys |
-| Base de datos | `DATABASE_URL` | Proveedor de hosting |
+| JWT Secret | `JWT_SECRET` | Generar con `openssl rand -base64 32` |
 
 #### Pasos de Instalación
 
 ##### 1. Clonar el repositorio
 
 ```bash
-git clone https://github.com/[usuario]/medrecord-ai.git
-cd medrecord-ai
+git clone https://github.com/YOUR_USERNAME/health-record.git
+cd health-record
 ```
 
-##### 2. Instalar dependencias
+##### 2. Configurar variables de entorno
 
 ```bash
-npm install
-# o
+# Copiar archivos de ejemplo
+cp .env.example .env
+cp packages/backend/.env.example packages/backend/.env
+cp packages/frontend/.env.example packages/frontend/.env
+
+# Editar packages/backend/.env con tus valores:
+# - OPENAI_API_KEY: Tu clave de API de OpenAI
+# - JWT_SECRET: Una clave secreta segura para tokens JWT
+```
+
+**Contenido de `packages/backend/.env`:**
+```env
+NODE_ENV=development
+PORT=3001
+DATABASE_URL="postgresql://healthrecord:healthrecord_dev@localhost:5432/healthrecord"
+JWT_SECRET="your-super-secret-jwt-key-change-in-production"
+OPENAI_API_KEY="sk-your-openai-api-key"
+FRONTEND_URL="http://localhost:5173"
+LOG_LEVEL="debug"
+```
+
+**Contenido de `packages/frontend/.env`:**
+```env
+VITE_API_URL=http://localhost:3001/api/v1
+VITE_WS_URL=http://localhost:3001
+```
+
+##### 3. Instalar dependencias
+
+```bash
 pnpm install
 ```
 
-##### 3. Configurar variables de entorno
+##### 4. Iniciar base de datos con Docker
 
-Crear archivo `.env.local` en la raíz del proyecto:
+```bash
+# Iniciar PostgreSQL en Docker
+docker-compose -f docker/docker-compose.yml up -d
 
-```env
-# Base de datos
-DATABASE_URL="postgresql://usuario:contraseña@localhost:5432/medrecord"
-
-# OpenAI
-OPENAI_API_KEY="sk-..."
-
-# Autenticación
-NEXTAUTH_SECRET="cadena-secreta-aleatoria"
-NEXTAUTH_URL="http://localhost:3000"
+# Verificar que el contenedor está ejecutándose
+docker ps
 ```
 
-##### 4. Configurar base de datos
+##### 5. Ejecutar migraciones y seed
 
 ```bash
 # Generar cliente Prisma
-npx prisma generate
+pnpm db:generate
 
 # Ejecutar migraciones
-npx prisma migrate dev
+pnpm db:migrate
 
-# (Opcional) Cargar datos de prueba
-npx prisma db seed
+# Cargar datos de prueba
+pnpm db:seed
 ```
 
-##### 5. Iniciar servidor de desarrollo
+##### 6. Iniciar la aplicación
 
 ```bash
-npm run dev
+# Iniciar frontend y backend simultáneamente
+pnpm dev
+
+# O iniciar cada uno por separado:
+pnpm dev:backend   # Terminal 1
+pnpm dev:frontend  # Terminal 2
 ```
 
-La aplicación estará disponible en `http://localhost:3000`
+##### 7. Acceder a la aplicación
+
+| Servicio | URL | Credenciales de prueba |
+|----------|-----|------------------------|
+| Frontend | http://localhost:5173 | `doctor@medrecord.com` / `password123` |
+| Backend API | http://localhost:3001 | - |
+| Prisma Studio | `pnpm db:studio` | - |
+
+#### Scripts Disponibles
+
+```bash
+# Desarrollo
+pnpm dev              # Iniciar frontend y backend
+pnpm dev:backend      # Solo backend
+pnpm dev:frontend     # Solo frontend
+
+# Base de datos
+pnpm db:migrate       # Ejecutar migraciones
+pnpm db:seed          # Cargar datos de prueba
+pnpm db:studio        # Abrir Prisma Studio (GUI para BD)
+pnpm db:generate      # Regenerar cliente Prisma
+
+# Calidad de código
+pnpm test             # Ejecutar tests
+pnpm lint             # Verificar linting
+pnpm lint:fix         # Corregir errores de linting
+pnpm format           # Formatear código con Prettier
+pnpm type-check       # Verificación de tipos TypeScript
+
+# Build
+pnpm build            # Compilar para producción
+```
 
 #### Opciones de Base de Datos
 
-##### Opción A: PostgreSQL Local
+##### Opción A: Docker (Recomendado para desarrollo)
+
+```bash
+# Ya incluido en el proyecto
+docker-compose -f docker/docker-compose.yml up -d
+```
+
+##### Opción B: PostgreSQL Local
 
 ```bash
 # macOS con Homebrew
 brew install postgresql@15
 brew services start postgresql@15
-createdb medrecord
+createdb healthrecord
+
+# Actualizar DATABASE_URL en .env
 ```
 
-##### Opción B: Docker
+##### Opción C: Base de Datos en la Nube
 
-```bash
-docker run --name medrecord-db \
-  -e POSTGRES_PASSWORD=password \
-  -e POSTGRES_DB=medrecord \
-  -p 5432:5432 \
-  -d postgres:15
-```
-
-##### Opción C: Base de Datos en la Nube (Recomendado)
-
-| Proveedor | Tier Gratuito |
-|-----------|---------------|
-| Neon | 0.5 GB |
-| Supabase | 500 MB |
-| Railway | $5 crédito |
-| Vercel Postgres | 256 MB |
-
-#### Despliegue en Producción
-
-```bash
-# Con Vercel
-npm i -g vercel
-vercel
-
-# Variables de entorno a configurar en Vercel:
-# - DATABASE_URL
-# - OPENAI_API_KEY
-# - NEXTAUTH_SECRET
-```
+| Proveedor | Tier Gratuito | Notas |
+|-----------|---------------|-------|
+| Neon | 0.5 GB | Recomendado, pooling incluido |
+| Supabase | 500 MB | Incluye autenticación |
+| Railway | $5 crédito | Fácil configuración |
 
 #### Verificación de Instalación
 
-1. Acceder a `http://localhost:3000`
-2. Crear cuenta de prueba
-3. Crear paciente de prueba
-4. Crear cita y probar grabación de audio
-5. Verificar transcripción y extracción de IA
+1. **Acceder a la aplicación**: http://localhost:5173
+2. **Iniciar sesión** con las credenciales de prueba
+3. **Navegar al dashboard** y verificar que se muestran los datos
+4. **Crear un paciente nuevo** desde el menú
+5. **Crear una cita** y abrir el registro médico
+6. **Probar la transcripción** (requiere OpenAI API Key válida)
+
+#### Solución de Problemas Comunes
+
+| Problema | Solución |
+|----------|----------|
+| Error de conexión a BD | Verificar que Docker está corriendo: `docker ps` |
+| Puerto 5173 en uso | Cambiar puerto en `vite.config.ts` o cerrar proceso |
+| Error de CORS | Verificar que `FRONTEND_URL` en backend coincide |
+| Transcripción no funciona | Verificar que `OPENAI_API_KEY` es válida |
 
 ---
 
-*Este documento será actualizado con instrucciones finales y capturas de pantalla después de completar la implementación.*
+*Para despliegue en producción, consultar `docs/deployment/deployment-guide.md`*
