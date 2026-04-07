@@ -1,0 +1,468 @@
+# ==============================================================
+# .github/workflows/ci.yml
+# CI/CD Pipeline — Proyecto Final AI/LLM Solution Architect
+# ==============================================================
+# Disparadores:
+#   - Push a main o develop
+#   - Pull Request hacia main
+#   - Ejecución manual desde GitHub UI (workflow_dispatch)
+#
+# Jobs:
+#   1. code-quality    → Lint + type-check (ruff + mypy)
+#   2. test            → Pruebas unitarias e integración + cobertura
+#   3. security        → bandit + pip-audit
+#   4. build           → Docker build + smoke test (solo en main)
+#   5. notify          → Resumen del pipeline (siempre)
+# ==============================================================
+
+name: CI — AI-LLM Project
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      run_load_test:
+        description: "¿Ejecutar prueba de carga? (solo en workflow manual)"
+        required: false
+        default: "false"
+        type: choice
+        options: ["true", "false"]
+
+# Cancela ejecuciones anteriores del mismo PR para ahorrar minutos
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.11"
+  IMAGE_NAME: ai-llm-project
+  REGISTRY: ghcr.io
+
+# ==============================================================
+# JOB 1: Calidad de Código
+# ==============================================================
+jobs:
+  code-quality:
+    name: "🔍 Calidad de Código (lint + tipos)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Instalar herramientas de calidad
+        run: |
+          pip install --upgrade pip
+          pip install ruff mypy
+
+      - name: Lint con ruff
+        run: |
+          echo "::group::Ruff - verificación de estilo y convenciones"
+          ruff check src/ tests/ --output-format=github
+          echo "::endgroup::"
+
+      - name: Verificación de formato
+        run: |
+          echo "::group::Ruff format - verificación de formato"
+          ruff format src/ tests/ --check --diff
+          echo "::endgroup::"
+
+      - name: Verificación de tipos con mypy
+        run: |
+          echo "::group::MyPy - análisis de tipos estático"
+          mypy src/ --ignore-missing-imports --show-error-codes --pretty
+          echo "::endgroup::"
+
+
+# ==============================================================
+# JOB 2: Pruebas Unitarias e Integración
+# ==============================================================
+  test:
+    name: "🧪 Pruebas (unitarias + integración)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: code-quality
+
+    services:
+      # Base de datos PostgreSQL para pruebas de integración
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: test_ai_llm
+        ports:
+          - "5432:5432"
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      # ChromaDB local para pruebas de vector store
+      chromadb:
+        image: chromadb/chroma:latest
+        ports:
+          - "8001:8000"
+        options: >-
+          --health-cmd "curl -f http://localhost:8000/api/v1/heartbeat || exit 1"
+          --health-interval 15s
+          --health-timeout 10s
+          --health-retries 5
+
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Instalar dependencias
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov pytest-asyncio pytest-mock
+
+      - name: Ejecutar pruebas con cobertura
+        env:
+          # Configuración de entorno para testing
+          ENVIRONMENT: testing
+          LOG_LEVEL: WARNING
+
+          # LLM — se usa mock en CI para evitar costos
+          USE_LLM_MOCK: "true"
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY || 'sk-test-mock-key-for-ci' }}
+          OPENAI_MODEL: gpt-4o-mini
+
+          # Vector Store — ChromaDB local
+          VECTOR_DB_PROVIDER: chromadb
+          CHROMADB_HOST: localhost
+          CHROMADB_PORT: 8001
+          CHROMADB_COLLECTION_NAME: test_collection
+
+          # Base de datos
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_ai_llm
+          TEST_DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_ai_llm
+
+          # Seguridad
+          JWT_SECRET_KEY: test-secret-key-only-for-ci-not-production
+          JWT_ALGORITHM: HS256
+          JWT_ACCESS_TOKEN_EXPIRE_MINUTES: 60
+
+          # Embeddings — modelo ligero para CI
+          EMBEDDINGS_PROVIDER: openai
+          EMBEDDINGS_MODEL: text-embedding-3-small
+          EMBEDDINGS_DIMENSIONS: 1536
+
+          # RAG
+          RAG_TOP_K: 3
+          RAG_CHUNK_SIZE: 500
+          RAG_CHUNK_OVERLAP: 50
+
+        run: |
+          pytest tests/ \
+            --verbose \
+            --tb=short \
+            --cov=src \
+            --cov-report=xml:reports/coverage.xml \
+            --cov-report=term-missing \
+            --cov-fail-under=60 \
+            --junitxml=reports/test_results.xml \
+            -W ignore::DeprecationWarning \
+            -m "not slow"
+
+      - name: Publicar resultados de pruebas
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: "Resultados de Pruebas"
+          path: reports/test_results.xml
+          reporter: java-junit
+          fail-on-error: false
+
+      - name: Subir reporte de cobertura a Codecov
+        uses: codecov/codecov-action@v4
+        if: always()
+        with:
+          file: reports/coverage.xml
+          flags: unittests
+          name: ai-llm-project-coverage
+          fail_ci_if_error: false
+
+      - name: Comentar cobertura en PR
+        uses: py-cov-action/python-coverage-comment-action@v3
+        if: github.event_name == 'pull_request'
+        with:
+          GITHUB_TOKEN: ${{ github.token }}
+          MINIMUM_GREEN: 80
+          MINIMUM_ORANGE: 60
+        continue-on-error: true
+
+      - name: Guardar reportes como artefactos
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-reports
+          path: reports/
+          retention-days: 30
+
+
+# ==============================================================
+# JOB 3: Análisis de Seguridad
+# ==============================================================
+  security:
+    name: "🔒 Seguridad (SAST + dependencias)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: code-quality
+
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Instalar herramientas de seguridad
+        run: |
+          pip install bandit pip-audit
+
+      - name: Análisis de seguridad estático (bandit)
+        run: |
+          echo "::group::Bandit - análisis estático de seguridad"
+          mkdir -p reports
+          bandit \
+            --recursive src/ \
+            --severity-level medium \
+            --confidence-level medium \
+            --format json \
+            --output reports/bandit_report.json \
+            --exclude tests/ || true
+          # Mostrar reporte en texto
+          bandit \
+            --recursive src/ \
+            --severity-level medium \
+            --confidence-level medium \
+            --exclude tests/
+          echo "::endgroup::"
+
+      - name: Verificación de vulnerabilidades en dependencias (pip-audit)
+        run: |
+          echo "::group::pip-audit - vulnerabilidades en dependencias"
+          pip-audit \
+            --requirement requirements.txt \
+            --format json \
+            --output reports/pip_audit_report.json || true
+          # Mostrar reporte en texto y fallar si hay vulnerabilidades
+          pip-audit --requirement requirements.txt
+          echo "::endgroup::"
+
+      - name: Verificar ausencia de secretos en código (gitleaks)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+      - name: Guardar reportes de seguridad
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-reports
+          path: reports/
+          retention-days: 30
+
+
+# ==============================================================
+# JOB 4: Build Docker (solo en rama main)
+# ==============================================================
+  build:
+    name: "🐳 Docker Build & Smoke Test"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [test, security]
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login al GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extraer metadatos de la imagen
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix=sha-,format=short
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+
+      - name: Construir imagen Docker
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          target: runtime
+          push: false
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          load: true
+
+      - name: Smoke test del contenedor
+        run: |
+          echo "▶ Iniciando contenedor para smoke test..."
+          docker run -d \
+            --name smoke-test-container \
+            --env ENVIRONMENT=testing \
+            --env LOG_LEVEL=WARNING \
+            --env USE_LLM_MOCK=true \
+            --env OPENAI_API_KEY=sk-test-mock \
+            --env VECTOR_DB_PROVIDER=chromadb \
+            --env JWT_SECRET_KEY=test-secret-key-smoke-test \
+            --env JWT_ALGORITHM=HS256 \
+            -p 8000:8000 \
+            ${{ env.IMAGE_NAME }}:latest
+
+          echo "▶ Esperando que la API esté lista..."
+          timeout 30 bash -c 'until curl -sf http://localhost:8000/api/v1/health; do sleep 2; done'
+
+          echo ""
+          echo "▶ Verificando respuesta del health check..."
+          STATUS=$(curl -sf http://localhost:8000/api/v1/health | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('status','unknown'))")
+          echo "  Estado del sistema: $STATUS"
+
+          docker stop smoke-test-container
+          docker rm smoke-test-container
+
+          [ "$STATUS" = "healthy" ] || [ "$STATUS" = "degraded" ] || \
+            (echo "❌ Health check falló con estado: $STATUS" && exit 1)
+          echo "✓ Smoke test exitoso"
+
+      - name: Publicar imagen al registry (solo en main)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          target: runtime
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Generar resumen de la imagen
+        run: |
+          echo "## 🐳 Imagen Docker Publicada" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Campo | Valor |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Registry | ${{ env.REGISTRY }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Tags | ${{ steps.meta.outputs.tags }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Commit | ${{ github.sha }} |" >> $GITHUB_STEP_SUMMARY
+
+
+# ==============================================================
+# JOB 5 (OPCIONAL): Prueba de Carga
+# Solo se ejecuta si se dispara manualmente con run_load_test=true
+# ==============================================================
+  load-test:
+    name: "⚡ Prueba de Carga (k6)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [test]
+    if: github.event.inputs.run_load_test == 'true'
+
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+
+      - name: Instalar k6
+        run: |
+          curl -fsSL https://dl.k6.io/key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/k6-archive-keyring.gpg
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update && sudo apt-get install -y k6
+
+      - name: Ejecutar prueba de carga
+        run: |
+          mkdir -p reports
+          k6 run \
+            --out json=reports/load_test_results.json \
+            tests/load/load_test.js
+        env:
+          API_BASE_URL: ${{ vars.API_STAGING_URL || 'http://localhost:8000' }}
+
+      - name: Guardar resultados de carga
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: load-test-results
+          path: reports/load_test_results.json
+          retention-days: 30
+
+
+# ==============================================================
+# JOB 6: Notificación y Resumen Final
+# ==============================================================
+  notify:
+    name: "📋 Resumen del Pipeline"
+    runs-on: ubuntu-latest
+    needs: [code-quality, test, security, build]
+    if: always()
+
+    steps:
+      - name: Generar resumen en GitHub
+        run: |
+          echo "## 📋 Resumen del Pipeline CI/CD" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Estado |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔍 Calidad de Código | ${{ needs.code-quality.result == 'success' && '✅ Pasó' || '❌ Falló' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🧪 Pruebas | ${{ needs.test.result == 'success' && '✅ Pasó' || needs.test.result == 'skipped' && '⏭️ Omitido' || '❌ Falló' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔒 Seguridad | ${{ needs.security.result == 'success' && '✅ Pasó' || needs.security.result == 'skipped' && '⏭️ Omitido' || '❌ Falló' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🐳 Docker Build | ${{ needs.build.result == 'success' && '✅ Pasó' || needs.build.result == 'skipped' && '⏭️ Omitido (no es main)' || '❌ Falló' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Rama:** \`${{ github.ref_name }}\`  " >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** \`${{ github.sha }}\`  " >> $GITHUB_STEP_SUMMARY
+          echo "**Disparado por:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+
+      - name: Fallar si algún job crítico falló
+        if: |
+          needs.code-quality.result == 'failure' ||
+          needs.test.result == 'failure' ||
+          needs.security.result == 'failure'
+        run: |
+          echo "❌ El pipeline falló en uno o más jobs críticos."
+          echo "   Revisa los logs de cada job para más detalles."
+          exit 1
