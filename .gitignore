@@ -86,3 +86,29 @@ docker-compose.override.yml
 .cache/
 .temp/
 .tmp/
+
+# ===========================================
+# AI Service (Python)
+# ===========================================
+ai-service/venv/
+ai-service/.env
+ai-service/__pycache__/
+ai-service/*.pyc
+ai-service/.pytest_cache/
+ai-service/.mypy_cache/
+ai-service/.ruff_cache/
+ai-service/htmlcov/
+ai-service/.coverage
+ai-service/dist/
+ai-service/*.egg-info/
+
+# ===========================================
+# Documentation builds
+# ===========================================
+docs/_build/
+docs/presentation/img/*.png
+
+# ===========================================
+# ChromaDB local data
+# ===========================================
+chroma_data/
