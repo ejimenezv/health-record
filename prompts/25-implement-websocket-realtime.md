@@ -27,7 +27,7 @@ This is the WebSocket Gateway that orchestrates the complete real-time pipeline:
 ## Tasks
 
 ### 1. Create WebSocket Connection Manager
-Create `src/api/websocket/manager.py`:
+Create `ai-service/src/api/websocket/manager.py`:
 
 ```python
 from typing import Dict, Set, Optional
@@ -123,7 +123,7 @@ connection_manager = ConnectionManager()
 
 ### 2. Create Service Dependencies Module
 
-Create `src/api/dependencies.py`:
+Create `ai-service/src/api/dependencies.py`:
 
 ```python
 """
@@ -190,7 +190,7 @@ async def cleanup_services() -> None:
 ```
 
 ### 3. Create WebSocket Endpoint (Event-Driven Orchestration)
-Create `src/api/websocket/streaming.py`:
+Create `ai-service/src/api/websocket/streaming.py`:
 
 ```python
 """
@@ -704,7 +704,7 @@ async def finalize_session(
 ```
 
 ### 3. Create WebSocket Authentication
-Create `src/security/websocket_auth.py`:
+Create `ai-service/src/security/websocket_auth.py`:
 
 ```python
 from fastapi import HTTPException
@@ -867,7 +867,7 @@ if __name__ == "__main__":
 ```
 
 ### 5. Write WebSocket Tests
-Create `tests/unit/test_websocket.py`:
+Create `ai-service/tests/unit/test_websocket.py`:
 
 ```python
 import pytest
@@ -963,12 +963,12 @@ class TestTranscriptionBuffer:
 ```
 
 ## Expected Deliverables
-- `src/api/websocket/__init__.py` - Module exports
-- `src/api/websocket/manager.py` - Connection manager (multi-session support)
-- `src/api/websocket/streaming.py` - **Event-driven WebSocket endpoint**
-- `src/security/websocket_auth.py` - WebSocket JWT authentication
+- `ai-service/src/api/websocket/__init__.py` - Module exports
+- `ai-service/src/api/websocket/manager.py` - Connection manager (multi-session support)
+- `ai-service/src/api/websocket/streaming.py` - **Event-driven WebSocket endpoint**
+- `ai-service/src/security/websocket_auth.py` - WebSocket JWT authentication
 - `docs/examples/websocket_client.py` - Example client with all event types
-- `tests/unit/test_websocket.py` - Unit tests
+- `ai-service/tests/unit/test_websocket.py` - Unit tests
 
 ## Verification Steps
 

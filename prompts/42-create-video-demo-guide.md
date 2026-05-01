@@ -802,7 +802,7 @@ valida dosis contra un formulario farmacológico antes de incluirlas en
 el output final.
 
 [Metodología]
-El dataset de evaluación está disponible en `notebooks/spanish_medical_qa_dataset.json`
+El dataset de evaluación está disponible en `ai-service/notebooks/spanish_medical_qa_dataset.json`
 y fue validado por un médico general para asegurar realismo y corrección
 clínica de las respuestas esperadas.
 ```

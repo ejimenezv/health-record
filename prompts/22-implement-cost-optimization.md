@@ -23,7 +23,7 @@ Cost optimization is critical for:
 
 ### 1. Create Streaming-Aware Caching Layer
 
-Create `src/services/cache.py`:
+Create `ai-service/src/services/cache.py`:
 
 ```python
 """
@@ -367,7 +367,7 @@ class InMemoryCache:
 
 ### 2. Create Model Selection Strategy
 
-Create `src/services/cost_tracker.py` (if not already created by Prompt 39):
+Create `ai-service/src/services/cost_tracker.py` (if not already created by Prompt 39):
 
 ```python
 """
@@ -460,7 +460,7 @@ class CostTracker:
         )
 ```
 
-Create `src/services/model_selector.py`:
+Create `ai-service/src/services/model_selector.py`:
 
 ```python
 """
@@ -644,7 +644,7 @@ class ModelSelector:
 
 ### 3. Create Real-Time Cost Dashboard
 
-Create `src/services/cost_dashboard.py`:
+Create `ai-service/src/services/cost_dashboard.py`:
 
 ```python
 """
@@ -910,7 +910,7 @@ class CostDashboard:
 
 ### 4. Integration with RAG Validation
 
-Add to `src/rag/retriever.py` (update existing):
+Add to `ai-service/src/rag/retriever.py` (update existing):
 
 ```python
 # Add to RetrieverService.__init__:
@@ -1020,13 +1020,13 @@ async def retrieve_interactions(
 
 ## Expected Deliverables
 
-1. `src/services/cache.py` - Streaming-aware caching layer with:
+1. `ai-service/src/services/cache.py` - Streaming-aware caching layer with:
    - Chunk-level transcription caching
    - Entity extraction caching
    - RAG validation caching (medications, interactions)
    - Cache statistics for monitoring
-2. `src/services/model_selector.py` - Dynamic model selection with per-session cost tracking
-3. `src/services/cost_dashboard.py` - Real-time cost analytics with:
+2. `ai-service/src/services/model_selector.py` - Dynamic model selection with per-session cost tracking
+3. `ai-service/src/services/cost_dashboard.py` - Real-time cost analytics with:
    - Per-session cost breakdown
    - Active session monitoring
    - Cache savings tracking

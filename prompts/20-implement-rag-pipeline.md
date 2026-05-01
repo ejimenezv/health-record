@@ -25,7 +25,7 @@ The RAG pipeline will:
 
 ### 1. Create Async Vector Store Client
 
-Create `src/rag/vector_store.py`:
+Create `ai-service/src/rag/vector_store.py`:
 
 ```python
 """
@@ -185,7 +185,7 @@ class VectorStoreClient:
 
 ### 2. Create Async Embeddings Service
 
-Create `src/rag/embeddings.py`:
+Create `ai-service/src/rag/embeddings.py`:
 
 ```python
 """
@@ -313,7 +313,7 @@ class EmbeddingsService:
 
 ### 3. Create Document Ingestion Pipeline
 
-Create `src/rag/ingestion.py`:
+Create `ai-service/src/rag/ingestion.py`:
 
 ```python
 """
@@ -542,7 +542,7 @@ Posología: {row.get('posologia', '')}
 
 ### 4. Create Async Retriever Service
 
-Create `src/rag/retriever.py`:
+Create `ai-service/src/rag/retriever.py`:
 
 ```python
 """
@@ -756,7 +756,7 @@ class RetrieverService:
 
 ### 5. Create Unit Tests
 
-Create `tests/unit/test_retriever.py`:
+Create `ai-service/tests/unit/test_retriever.py`:
 
 ```python
 """
@@ -896,7 +896,7 @@ class TestRetrieverService:
 
 ### 6. Create Integration Test
 
-Create `tests/integration/test_rag_real_time.py`:
+Create `ai-service/tests/integration/test_rag_real_time.py`:
 
 ```python
 """
@@ -983,15 +983,15 @@ class TestRAGRealTimePerformance:
 
 ## Expected Deliverables
 
-1. `src/rag/vector_store.py` - Async ChromaDB client with query_async()
-2. `src/rag/embeddings.py` - Async embeddings service with generate_query_embedding_async()
-3. `src/rag/ingestion.py` - Batch document ingestion pipeline (sync, for initial setup)
-4. `src/rag/retriever.py` - Async semantic retrieval service with:
+1. `ai-service/src/rag/vector_store.py` - Async ChromaDB client with query_async()
+2. `ai-service/src/rag/embeddings.py` - Async embeddings service with generate_query_embedding_async()
+3. `ai-service/src/rag/ingestion.py` - Batch document ingestion pipeline (sync, for initial setup)
+4. `ai-service/src/rag/retriever.py` - Async semantic retrieval service with:
    - `retrieve_medications()` - <150ms target
    - `retrieve_interactions()` - <200ms target
    - `retrieve_cie10()` - <150ms target
-5. `tests/unit/test_retriever.py` - Async unit tests
-6. `tests/integration/test_rag_real_time.py` - Real-time performance tests
+5. `ai-service/tests/unit/test_retriever.py` - Async unit tests
+6. `ai-service/tests/integration/test_rag_real_time.py` - Real-time performance tests
 
 ## Verification Steps
 
@@ -1041,7 +1041,7 @@ Total validation latency budget (Prompt 21):
 
 ## 7. RAG Performance Metrics
 
-Create `src/rag/metrics.py`:
+Create `ai-service/src/rag/metrics.py`:
 
 ```python
 """
@@ -1139,7 +1139,7 @@ collection = client.get_or_create_collection(
 
 ## 9. Optimized RAG Query Function
 
-Add to `src/rag/retriever.py` for query optimization:
+Add to `ai-service/src/rag/retriever.py` for query optimization:
 
 ```python
 async def optimized_rag_query(

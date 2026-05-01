@@ -1,0 +1,50 @@
+# ==============================================================
+# docker-compose.prod.yml — Production overrides
+# Usage: docker compose -f docker-compose.yml -f docker-compose.prod.yml up
+# ==============================================================
+
+services:
+  ai-service:
+    build:
+      context: .
+      target: runtime
+    environment:
+      - ENVIRONMENT=production
+      - LOG_LEVEL=INFO
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 2G
+        reservations:
+          cpus: "0.5"
+          memory: 1G
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+    volumes: []
+
+  chromadb:
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
+
+  postgres:
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+  redis:
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+    command: redis-server --appendonly yes --appendfsync everysec --maxmemory 400mb --maxmemory-policy allkeys-lru

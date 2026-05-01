@@ -448,7 +448,7 @@ unstructured==0.12.4
 pydub==0.25.1
 opuslib==3.0.1           # Opus codec for WebSocket streaming
 numpy==1.26.4            # For audio processing
-silero-vad==4.0.0        # Voice Activity Detection
+silero-vad==5.1.2        # Voice Activity Detection
 torch==2.2.0             # Required by Silero VAD (CPU-only)
 
 # ─── Security ───────────────────────────────────────────────────
@@ -466,7 +466,7 @@ redis==5.0.1
 aioredis==2.0.1
 
 # ─── HTTP Client ────────────────────────────────────────────────
-httpx==0.26.0
+httpx==0.25.2
 aiohttp==3.9.3
 
 # ─── Observability ──────────────────────────────────────────────
@@ -492,9 +492,9 @@ Create `requirements-dev.txt`:
 # ─── Testing ────────────────────────────────────────────────────
 pytest==8.0.0
 pytest-cov==4.1.0
-pytest-asyncio==0.23.4
+pytest-asyncio==0.23.8
 pytest-mock==3.12.0
-httpx==0.26.0
+httpx==0.25.2
 
 # ─── LLM Evaluation ─────────────────────────────────────────────
 ragas==0.1.4

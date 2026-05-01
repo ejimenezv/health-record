@@ -1,0 +1,228 @@
+[
+  {
+    "id": "int_warfarina_ibuprofeno",
+    "med_a": "warfarina",
+    "med_b": "ibuprofeno",
+    "severidad": "CRITICA",
+    "description": "Aumento marcado del riesgo hemorrágico. AINE inhiben la función plaquetaria y dañan la mucosa gastrointestinal. La combinación con warfarina multiplica el riesgo de sangrado mayor.",
+    "mecanismo": "AINE inhiben tromboxano y dañan mucosa GI; warfarina inhibe factores de coagulación dependientes de vitamina K.",
+    "recomendacion": "Evitar la combinación. Si es imprescindible, preferir paracetamol como analgésico; en caso de AINE, usar el de menor riesgo el menor tiempo posible y monitorizar INR y signos de sangrado.",
+    "source": "AEMPS - Lexicomp"
+  },
+  {
+    "id": "int_warfarina_aspirina",
+    "med_a": "warfarina",
+    "med_b": "aspirina",
+    "severidad": "CRITICA",
+    "description": "Riesgo hemorrágico significativamente aumentado por efecto antiplaquetario de la aspirina sumado a anticoagulación.",
+    "recomendacion": "Reservar la combinación a indicaciones específicas (válvulas mecánicas, SCA reciente). Monitorizar INR y signos de sangrado.",
+    "source": "AEMPS"
+  },
+  {
+    "id": "int_warfarina_amoxicilina",
+    "med_a": "warfarina",
+    "med_b": "amoxicilina",
+    "severidad": "MAYOR",
+    "description": "Antibióticos pueden alterar la flora intestinal y aumentar el efecto anticoagulante de la warfarina, elevando el INR.",
+    "recomendacion": "Monitorizar INR a los 3-5 días de iniciar el antibiótico y al finalizarlo.",
+    "source": "AEMPS"
+  },
+  {
+    "id": "int_warfarina_paracetamol",
+    "med_a": "warfarina",
+    "med_b": "paracetamol",
+    "severidad": "MAYOR",
+    "description": "Paracetamol a dosis >2 g/día durante varios días puede potenciar el efecto anticoagulante de la warfarina.",
+    "recomendacion": "Limitar paracetamol a dosis ≤2 g/día en pacientes anticoagulados; monitorizar INR si uso prolongado.",
+    "source": "AEMPS"
+  },
+  {
+    "id": "int_warfarina_ciprofloxacino",
+    "med_a": "warfarina",
+    "med_b": "ciprofloxacino",
+    "severidad": "MAYOR",
+    "description": "Ciprofloxacino inhibe el metabolismo de la warfarina y aumenta el INR.",
+    "recomendacion": "Monitorizar INR estrechamente al iniciar y finalizar ciprofloxacino. Considerar reducir dosis de warfarina.",
+    "source": "AEMPS"
+  },
+  {
+    "id": "int_warfarina_azitromicina",
+    "med_a": "warfarina",
+    "med_b": "azitromicina",
+    "severidad": "MODERADA",
+    "description": "Macrólidos pueden potenciar el efecto anticoagulante.",
+    "recomendacion": "Monitorizar INR.",
+    "source": "AEMPS"
+  },
+  {
+    "id": "int_aspirina_ibuprofeno",
+    "med_a": "aspirina",
+    "med_b": "ibuprofeno",
+    "severidad": "MAYOR",
+    "description": "El ibuprofeno bloquea la unión irreversible de aspirina a las plaquetas, reduciendo su efecto antiagregante cardiovascular.",
+    "recomendacion": "Si es imprescindible AINE concomitante, administrar ibuprofeno al menos 30 min después de aspirina o 8 h antes. Preferir paracetamol como analgésico.",
+    "source": "AEMPS"
+  },
+  {
+    "id": "int_ibuprofeno_losartan",
+    "med_a": "ibuprofeno",
+    "med_b": "losartán",
+    "severidad": "MAYOR",
+    "description": "AINE reducen el efecto antihipertensivo de ARA-II y aumentan el riesgo de insuficiencia renal aguda, especialmente en deshidratación o ancianos.",
+    "recomendacion": "Evitar combinación crónica. Si es necesaria, vigilar función renal y presión arterial. Considerar paracetamol.",
+    "source": "AEMPS"
+  },
+  {
+    "id": "int_ibuprofeno_enalapril",
+    "med_a": "ibuprofeno",
+    "med_b": "enalapril",
+    "severidad": "MAYOR",
+    "description": "AINE reducen el efecto antihipertensivo de IECA y aumentan riesgo de fallo renal agudo (triple whammy si se asocia a diurético).",
+    "recomendacion": "Evitar uso crónico. Vigilar creatinina y potasio. Preferir paracetamol como analgésico.",
+    "source": "AEMPS"
+  },
+  {
+    "id": "int_ibuprofeno_hidroclorotiazida",
+    "med_a": "ibuprofeno",
+    "med_b": "hidroclorotiazida",
+    "severidad": "MODERADA",
+    "description": "AINE reducen el efecto diurético y antihipertensivo y elevan el riesgo de insuficiencia renal.",
+    "recomendacion": "Evitar AINE crónicos; monitorizar función renal y presión arterial.",
+    "source": "AEMPS"
+  },
+  {
+    "id": "int_omeprazol_clopidogrel",
+    "med_a": "omeprazol",
+    "med_b": "clopidogrel",
+    "severidad": "MAYOR",
+    "description": "Omeprazol inhibe CYP2C19 y reduce la activación de clopidogrel a su metabolito activo, disminuyendo el efecto antiagregante.",
+    "recomendacion": "Preferir pantoprazol como IBP en pacientes que toman clopidogrel.",
+    "source": "AEMPS"
+  },
+  {
+    "id": "int_metformina_contraste_yodado",
+    "med_a": "metformina",
+    "med_b": "contraste yodado",
+    "severidad": "MAYOR",
+    "description": "Riesgo de acidosis láctica por nefropatía inducida por contraste, especialmente con función renal alterada.",
+    "recomendacion": "Suspender metformina antes y 48 horas después del contraste; reanudar tras confirmar función renal estable.",
+    "source": "AEMPS"
+  },
+  {
+    "id": "int_simvastatina_amiodarona",
+    "med_a": "simvastatina",
+    "med_b": "amiodarona",
+    "severidad": "MAYOR",
+    "description": "Amiodarona inhibe CYP3A4 y aumenta niveles de simvastatina, elevando el riesgo de miopatía y rabdomiolisis.",
+    "recomendacion": "Limitar simvastatina a 20 mg/día con amiodarona, o cambiar a pravastatina/rosuvastatina.",
+    "source": "AEMPS"
+  },
+  {
+    "id": "int_simvastatina_ciprofloxacino",
+    "med_a": "simvastatina",
+    "med_b": "ciprofloxacino",
+    "severidad": "MODERADA",
+    "description": "Ciprofloxacino puede aumentar niveles de estatinas metabolizadas por CYP3A4.",
+    "recomendacion": "Monitorizar mialgias y CK; pausar estatina durante el ciclo si dosis altas.",
+    "source": "AEMPS"
+  },
+  {
+    "id": "int_atenolol_amlodipino",
+    "med_a": "atenolol",
+    "med_b": "amlodipino",
+    "severidad": "MENOR",
+    "description": "Asociación común y beneficiosa en hipertensión; vigilar bradicardia.",
+    "recomendacion": "Combinación habitual. Monitorizar frecuencia cardiaca al inicio.",
+    "source": "AEMPS"
+  },
+  {
+    "id": "int_tramadol_isrs",
+    "med_a": "tramadol",
+    "med_b": "ISRS",
+    "severidad": "MAYOR",
+    "description": "Riesgo de síndrome serotoninérgico al asociar tramadol con ISRS o IMAO.",
+    "recomendacion": "Evitar combinación si es posible; vigilar síntomas (agitación, hipertermia, mioclonías).",
+    "source": "AEMPS"
+  },
+  {
+    "id": "int_levotiroxina_calcio",
+    "med_a": "levotiroxina",
+    "med_b": "carbonato de calcio",
+    "severidad": "MODERADA",
+    "description": "Calcio reduce la absorción intestinal de levotiroxina.",
+    "recomendacion": "Separar la administración al menos 4 horas.",
+    "source": "AEMPS"
+  },
+  {
+    "id": "int_levotiroxina_omeprazol",
+    "med_a": "levotiroxina",
+    "med_b": "omeprazol",
+    "severidad": "MENOR",
+    "description": "IBP pueden reducir la absorción de levotiroxina al alterar el pH gástrico.",
+    "recomendacion": "Vigilar TSH y ajustar dosis si es necesario.",
+    "source": "AEMPS"
+  },
+  {
+    "id": "int_amoxiclav_warfarina",
+    "med_a": "amoxicilina-clavulánico",
+    "med_b": "warfarina",
+    "severidad": "MAYOR",
+    "description": "Riesgo de aumento del INR similar al de amoxicilina sola.",
+    "recomendacion": "Monitorizar INR durante el tratamiento antibiótico.",
+    "source": "AEMPS"
+  },
+  {
+    "id": "int_clopidogrel_aspirina",
+    "med_a": "clopidogrel",
+    "med_b": "aspirina",
+    "severidad": "MODERADA",
+    "description": "Doble antiagregación: indicada en SCA o tras stent, pero aumenta riesgo hemorrágico.",
+    "recomendacion": "Limitar duración según guías; añadir IBP gastroprotector (preferir pantoprazol).",
+    "source": "AEMPS"
+  },
+  {
+    "id": "int_diclofenaco_warfarina",
+    "med_a": "diclofenaco",
+    "med_b": "warfarina",
+    "severidad": "CRITICA",
+    "description": "Riesgo hemorrágico marcadamente aumentado.",
+    "recomendacion": "Evitar combinación. Usar paracetamol como alternativa analgésica.",
+    "source": "AEMPS"
+  },
+  {
+    "id": "int_glibenclamida_aspirina",
+    "med_a": "glibenclamida",
+    "med_b": "aspirina",
+    "severidad": "MODERADA",
+    "description": "Aspirina a dosis altas puede potenciar la hipoglucemia inducida por sulfonilureas.",
+    "recomendacion": "Vigilar glucemias; aspirina a dosis antiagregante (75-100 mg) tiene impacto mínimo.",
+    "source": "AEMPS"
+  },
+  {
+    "id": "int_metformina_ibuprofeno",
+    "med_a": "metformina",
+    "med_b": "ibuprofeno",
+    "severidad": "MODERADA",
+    "description": "AINE pueden reducir la función renal y aumentar el riesgo de acidosis láctica con metformina.",
+    "recomendacion": "Vigilar creatinina; evitar AINE crónicos.",
+    "source": "AEMPS"
+  },
+  {
+    "id": "int_dexametasona_aines",
+    "med_a": "dexametasona",
+    "med_b": "ibuprofeno",
+    "severidad": "MAYOR",
+    "description": "Asociación de corticoide con AINE multiplica el riesgo de úlcera gastrointestinal y sangrado.",
+    "recomendacion": "Evitar combinación o añadir gastroprotección con IBP.",
+    "source": "AEMPS"
+  },
+  {
+    "id": "int_atenolol_salbutamol",
+    "med_a": "atenolol",
+    "med_b": "salbutamol",
+    "severidad": "MAYOR",
+    "description": "Betabloqueantes pueden antagonizar el efecto broncodilatador de salbutamol y empeorar broncoespasmo.",
+    "recomendacion": "Evitar betabloqueantes no cardioselectivos; usar cardioselectivos con precaución en asma/EPOC.",
+    "source": "AEMPS"
+  }
+]

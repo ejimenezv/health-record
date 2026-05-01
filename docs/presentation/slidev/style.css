@@ -1,0 +1,15 @@
+/* Suppress Slidev's goto dialog — stuck-open bug in 0.49.x */
+#slidev-goto-dialog {
+  display: none !important;
+}
+
+/* Center all Mermaid diagrams horizontally */
+.slidev-mermaid,
+.slidev-vclick-target .mermaid {
+  display: flex;
+  justify-content: center;
+}
+.slidev-mermaid svg,
+.mermaid svg {
+  margin: 0 auto;
+}

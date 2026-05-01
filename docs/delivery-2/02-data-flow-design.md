@@ -1,5 +1,18 @@
 # Diseño de Flujo de Datos en Tiempo Real - MedRecord AI
 
+> **Nota de estado (post-Prompt 27.3):** Las secciones 1 y 2 capturan la
+> visión lógica del flujo (frontend → backend → AI service → external) y
+> los objetivos de optimización por VAD. La implementación real difiere
+> en detalles importantes: el `StreamProcessor` quedó fuera de la ruta
+> de audio, el árbol de decisión por chunk de 200 ms fue reemplazado
+> por slicing acumulativo con overlap, y el pipeline de entidades creció
+> con 5 capas adicionales (split de compuestos, validador de tipo por
+> LLM, dedupe semántico, etc.). El **source-of-truth para la
+> implementación actual** es
+> [`../architecture/streaming-transcription-architecture.md`](../architecture/streaming-transcription-architecture.md).
+> Las secciones 3-6 de este documento (RAG, modelo de datos, estados de
+> sesión) siguen siendo precisas.
+
 ## 1. Flujo Principal: Streaming de Transcripción y Extracción Incremental
 
 ```
@@ -95,6 +108,14 @@
 
 ## 2. Flujo de Datos Interno: Procesamiento de Audio en Streaming
 
+> **El diagrama lógico de esta sección refleja la implementación actual
+> a alto nivel.** Para los detalles concretos (overlap window, capas de
+> dedup, hallucination filter, etc.) consultar
+> [`../architecture/streaming-transcription-architecture.md`](../architecture/streaming-transcription-architecture.md).
+> El árbol de decisión "voz/pausa corta/pausa media/silencio largo" del
+> diseño original se simplificó a un VAD pre-check sobre slices de 5 s
+> (ver Apéndice A de ese documento para el motivo).
+
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
 │              PIPELINE DE PROCESAMIENTO DE AUDIO (STREAMING)              │
@@ -103,107 +124,118 @@
 ┌─────────────────┐
 │ Audio Streaming │
 │ (WebSocket)     │
-│ Opus encoded    │
-│ chunks 100-200ms│
+│ MediaRecorder   │
+│ webm/opus       │
+│ timeslice 5000ms│
 └───────┬─────────┘
         │
         ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                    1. DECODIFICACIÓN Y BUFFER CIRCULAR                   │
+│       1. ACUMULADOR DE SESIÓN (cumulative session_audio bytearray)       │
 │  ┌─────────────────────────────────────────────────────────────────────┐│
-│  │ • Decodificar Opus → PCM 16kHz mono                                 ││
-│  │ • Almacenar en buffer circular (10 segundos)                        ││
-│  │ • Normalizar amplitud en tiempo real                                ││
-│  │ • Latencia de decodificación: < 10ms                                ││
+│  │ • Acumula TODOS los bytes webm de la sesión                         ││
+│  │ • Cada llamada decodifica el buffer entero (es válido siempre)      ││
+│  │ • Slicing con overlap: [last_processed_ms − 1500, current_ms]       ││
+│  │ • Latencia decode: ~50-150ms por slice de 5s                        ││
 │  └─────────────────────────────────────────────────────────────────────┘│
 └──────────────────────────────────────┬──────────────────────────────────┘
                                        │
                                        ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                    2. VAD STREAMING + DECISION TREE                      │
+│              2. VAD PRE-CHECK + WHISPER + DEDUP DE OVERLAP                │
 │  ┌─────────────────────────────────────────────────────────────────────┐│
-│  │ Silero VAD analiza cada chunk en tiempo real (< 100ms latencia)     ││
+│  │ Layer 1: Tail floor — drop si < 500ms (solo en finalize)            ││
 │  │                                                                      ││
-│  │ DECISION TREE:                                                       ││
-│  │ ┌─────────────────────────────────────────────────────────────────┐ ││
-│  │ │ VOZ ACTIVA (continuous)                                         │ ││
-│  │ │ └─▶ Acumular en buffer, enviar cada 5s a Whisper                │ ││
-│  │ │     Latencia: ~2s (prioridad baja latencia)                     │ ││
-│  │ ├─────────────────────────────────────────────────────────────────┤ ││
-│  │ │ SILENCIO CORTO (0-2s) - Pausa natural del habla                 │ ││
-│  │ │ └─▶ Continuar buffer, NO enviar aún                             │ ││
-│  │ │     El hablante probablemente sigue                             │ ││
-│  │ ├─────────────────────────────────────────────────────────────────┤ ││
-│  │ │ SILENCIO MEDIO (2-10s) - Fin de turno                           │ ││
-│  │ │ └─▶ Enviar buffer acumulado como BATCH a Whisper                │ ││
-│  │ │     Latencia: +2-3s (aceptable, optimiza costo)                 │ ││
-│  │ ├─────────────────────────────────────────────────────────────────┤ ││
-│  │ │ SILENCIO LARGO (>10s) - Examen físico, espera                   │ ││
-│  │ │ └─▶ SKIP - No enviar audio silencioso                           │ ││
-│  │ │     AHORRO: 20-30% del costo Whisper                            │ ││
-│  │ └─────────────────────────────────────────────────────────────────┘ ││
+│  │ Layer 2: Silero VAD sobre el slice (32 ms windows aggregadas)       ││
+│  │   voice_prob < 0.5 → SKIP, no se llama Whisper (ahorro de costo)    ││
+│  │                                                                      ││
+│  │ Layer 3: Whisper API (verbose_json) sobre el slice WAV              ││
+│  │   response.text + response.segments[{start,end,text,                ││
+│  │                                       no_speech_prob, avg_logprob}] ││
+│  │                                                                      ││
+│  │ Layer 4: Dedup de overlap por timestamps de Whisper                 ││
+│  │   conserva solo segmentos con seg.end > 1.5s                        ││
+│  │                                                                      ││
+│  │ Layer 5: HallucinationFilter                                        ││
+│  │   patterns ("Subtítulos por…"), repetición, sound markers,          ││
+│  │   mismo-que-anterior-slice, low confidence → drop                   ││
 │  └─────────────────────────────────────────────────────────────────────┘│
 │                                                                          │
-│  MÉTRICAS:                                                               │
-│  • 60 min consulta típica:                                              │
-│  •   Voz activa: ~28 min (47%) → Streaming 5s chunks                    │
-│  •   Pausas: ~7 min (12%) → Incluido en batch                           │
-│  •   Fin de turno: ~10 min (17%) → Batch mode                           │
-│  •   Silencio largo: ~15 min (25%) → SKIPPED (ahorro!)                  │
-│  • Audio procesado: 45 min (vs 60 min = 25% ahorro)                     │
+│  MÉTRICAS objetivo:                                                      │
+│  • % slices saltados por VAD: 15-30%                                    │
+│  • % slices descartados por hallucination filter: < 5%                  │
+│  • Costo por sesión 5min: ~$0.027                                       │
 └──────────────────────────────────────┬──────────────────────────────────┘
                                        │
                                        ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                    3. TRANSCRIPCIÓN STREAMING (CHUNKS 5s)                │
+│             3. CALLBACK on_transcript_chunk (closure por sesión)          │
 │  ┌─────────────────────────────────────────────────────────────────────┐│
-│  │ Whisper API con chunks de 5 segundos (durante voz activa)           ││
+│  │ Layer 6: Dedup de boundary a nivel texto (_strip_overlap_text)      ││
+│  │   strip prefijo del nuevo texto que coincide con sufijo del previo  ││
 │  │                                                                      ││
-│  │ ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐                 ││
-│  │ │ Chunk 1 │──│ Chunk 2 │──│ Chunk 3 │──│ Chunk N │──▶ ...          ││
-│  │ │ (5s)    │  │ (5s)    │  │ (5s)    │  │ (5s)    │                 ││
-│  │ └────┬────┘  └────┬────┘  └────┬────┘  └────┬────┘                 ││
-│  │      │            │            │            │                       ││
-│  │      ▼ 1-1.5s     ▼ 1-1.5s     ▼ 1-1.5s     ▼                      ││
-│  │ ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐                 ││
-│  │ │ Trans.  │  │ Trans.  │  │ Trans.  │  │ Trans.  │                 ││
-│  │ │ parcial │  │ parcial │  │ parcial │  │ parcial │                 ││
-│  │ └────┬────┘  └────┬────┘  └────┬────┘  └────┬────┘                 ││
-│  │      │            │            │            │                       ││
-│  │      └────────────┴────────────┴────────────┘                       ││
-│  │                         │                                            ││
-│  │                         ▼                                            ││
-│  │               CONTEXT WINDOW (últimos 200 chars)                    ││
-│  │               para mejorar continuidad de Whisper                   ││
+│  │ → emit transcript_update event (chunk_index, text, is_final, …)     ││
+│  │                                                                      ││
+│  │ Fan out:                                                             ││
+│  │   • diarizer.process_chunk(text, audio_samples=...)                 ││
+│  │   • extractor.process_transcript_chunk(text, is_partial)            ││
+│  │                                                                      ││
+│  │ Seed inicial: emite speaker_changed tras el primer chunk            ││
+│  │ (para que la UI muestre Hablante Actual desde el inicio)            ││
 │  └─────────────────────────────────────────────────────────────────────┘│
 │                                                                          │
-│  LATENCIA END-TO-END: < 2 segundos (desde hablar hasta UI)             │
-│  WebSocket event: transcription_update                                  │
+│  LATENCIA END-TO-END: ~5-8s desde hablar hasta UI                       │
+│  (limitado por Whisper API; reducción a <1s requiere faster-whisper)    │
 └──────────────────────────────────────┬──────────────────────────────────┘
                                        │
                                        ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                       4. DIARIZACIÓN INCREMENTAL                         │
+│              4. DIARIZACIÓN INCREMENTAL (audio-feature primary)          │
 │  ┌─────────────────────────────────────────────────────────────────────┐│
-│  │ Heurísticas aplicadas a cada chunk de transcripción:                ││
+│  │ AudioFeatureDiarizer (Resemblyzer):                                 ││
+│  │  • embed(audio_samples) → vector 256-dim L2-normed                  ││
+│  │  • cosine vs centroides por speaker (Redis state)                   ││
+│  │    ≥ 0.70 → match (EMA update del centroide)                        ││
+│  │    < 0.70 → nuevo SPEAKER_N (cap en 4 speakers/sesión)              ││
 │  │                                                                      ││
-│  │ 1. Análisis de turnos de habla (streaming)                          ││
-│  │    • Detectar cambio de hablante en tiempo real                     ││
-│  │    • Usar patrón pregunta-respuesta                                 ││
+│  │ Asignación de rol (DOCTOR / PATIENT / UNKNOWN):                     ││
+│  │  • Aún por keywords sobre el transcript (no audio):                 ││
+│  │    DOCTOR: "diagnóstico", "receto", "prescribo", "miligramos"       ││
+│  │    PATIENT: "me duele", "siento", "tengo", "desde hace"             ││
+│  │  • Confianza por agregación de indicadores                          ││
 │  │                                                                      ││
-│  │ 2. Análisis de vocabulario (español médico)                         ││
-│  │    • DOCTOR: "diagnóstico", "receto", "prescribo", "examen"         ││
-│  │    • PACIENTE: "me duele", "siento", "tengo", "desde hace"          ││
-│  │    • ACOMPAÑANTE: "mi madre", "el paciente", "le duele"             ││
+│  │ Fallback keyword-only si audio_samples ausente o < 1s               ││
 │  │                                                                      ││
-│  │ 3. ACTUALIZACIÓN RETROACTIVA                                        ││
-│  │    • Si más adelante se determina speaker correcto                  ││
-│  │    • Enviar evento de corrección al frontend                        ││
-│  │                                                                      ││
-│  │ Speakers soportados: DOCTOR / PACIENTE / ACOMPAÑANTE / DESCONOCIDO  ││
+│  │ Speakers soportados: DOCTOR / PATIENT / UNKNOWN                     ││
 │  └─────────────────────────────────────────────────────────────────────┘│
 │                                                                          │
-│  Precisión target: > 90% (2-4 speakers)                                 │
+│  Precisión: alta para voces espectralmente distintas (timbre).          │
+│  Rol DOCTOR/PATIENT depende de la riqueza de keywords en la sesión.     │
+└──────────────────────────────────────┬──────────────────────────────────┘
+                                       │
+                                       ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│              5. PIPELINE DE ENTIDADES (sobre cada ExtractionEvent)       │
+│  ┌─────────────────────────────────────────────────────────────────────┐│
+│  │ Layer A — AtomicEntitySplitter (gpt-4o-mini, solo si compuesto)     ││
+│  │   "fiebre y dolor de cabeza" → ["fiebre", "dolor de cabeza"]        ││
+│  │                                                                      ││
+│  │ Layer B — Forbidden-prefix (string sanity)                          ││
+│  │   "diagnóstico de…" no puede ser síntoma → drop                     ││
+│  │                                                                      ││
+│  │ Layer C — EntityTypeValidator (gpt-4o-mini)                         ││
+│  │   reclasifica entidades mal tipificadas con confianza ≥ 0.7         ││
+│  │                                                                      ││
+│  │ Layer D — Dedup heurístico per-tipo                                 ││
+│  │   exact match / containment                                         ││
+│  │                                                                      ││
+│  │ Layer E — EntitySemanticDeduper                                     ││
+│  │   OpenAI text-embedding-3-small + cosine ≥ 0.86                     ││
+│  │   captura sinónimos: "Cefalea" ↔ "dolor de cabeza"                  ││
+│  │                                                                      ││
+│  │ → emit extraction_update event                                      ││
+│  │ → validation_coordinator.enqueue_validation()                       ││
+│  └─────────────────────────────────────────────────────────────────────┘│
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 

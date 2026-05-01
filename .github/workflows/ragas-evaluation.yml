@@ -1,0 +1,71 @@
+name: RAGAS Evaluation
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'ai-service/src/rag/**'
+      - 'ai-service/tests/ragas/**'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'ai-service/src/rag/**'
+      - 'ai-service/tests/ragas/**'
+  schedule:
+    # Weekly on Mondays at 09:00 UTC
+    - cron: '0 9 * * 1'
+
+jobs:
+  ragas-evaluation:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ai-service
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: ai-service/requirements-dev.txt
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Run RAGAS evaluation
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: pytest tests/ragas/ -v -m ragas --tb=short
+
+      - name: Generate RAGAS report
+        if: always()
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: python tests/ragas/generate_report.py
+
+      - name: Upload RAGAS report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ragas-report
+          path: |
+            ai-service/reports/ragas_evaluation.md
+            ai-service/reports/ragas_results.json
+
+      - name: Check RAGAS requirements
+        run: |
+          python - <<'PY'
+          import json, sys
+          with open('reports/ragas_results.json') as f:
+              results = json.load(f)
+          met = results['requirements_met']
+          if not all(met.values()):
+              print('RAGAS requirements not met:', met)
+              sys.exit(1)
+          print('All RAGAS requirements met')
+          PY

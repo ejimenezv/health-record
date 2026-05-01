@@ -20,7 +20,7 @@ This prompt implements all security measures required for the BSG final delivery
 
 ### 1. Create .env.example (Secrets Documentation)
 
-**File:** `.env.example` (project root)
+**File:** `ai-service/.env.example`
 
 **Content:**
 ```bash
@@ -1520,7 +1520,7 @@ fi)
 
 ## Acciones Recomendadas
 
-1. **Revisar reportes detallados** en \`reports/security/\`
+1. **Revisar reportes detallados** en \`ai-service/reports/security/\`
 2. **Priorizar vulnerabilidades CRITICAL y HIGH**
 3. **Actualizar dependencias** con vulnerabilidades conocidas
 4. **Rotar secrets** si gitleaks encontró exposiciones
@@ -1596,7 +1596,7 @@ chmod +x scripts/security-scan.sh
 
 ### 5. Add Security Scan to Makefile
 
-**File:** `Makefile` (add this target)
+**File:** `Makefile` at project root (add this target — the security scan covers the whole monorepo, not just the AI service)
 
 **Content:**
 ```makefile
@@ -1653,11 +1653,11 @@ Contacta a: security@medrecord-ai.ejemplo.com
 
 After completing this prompt:
 
-- ✅ `.env.example` - Complete environment variables documentation
+- ✅ `ai-service/.env.example` - Complete environment variables documentation
 - ✅ `.gitignore` - Comprehensive exclusion rules
 - ✅ `docs/security/threat-model.md` - 6 threats with controls
 - ✅ `scripts/security-scan.sh` - Automated security scanning
-- ✅ `Makefile` - Security targets added
+- ✅ `Makefile` - Security targets added (project root)
 - ✅ README.md - Security section added
 
 ## BSG Compliance

@@ -1,0 +1,107 @@
+# ==============================================================
+# docker-compose.yml — MedRecord AI Service
+# Development stack: AI service + ChromaDB + Postgres + Redis
+# ==============================================================
+
+services:
+  ai-service:
+    build:
+      context: .
+      target: development
+    container_name: medrecord-ai-service
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - ENVIRONMENT=development
+      - CHROMADB_HOST=chromadb
+      - CHROMADB_PORT=8000
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-dev_user}:${POSTGRES_PASSWORD:-dev_password}@postgres:5432/${POSTGRES_DB:-medrecord_dev}
+      # Numba (used by librosa for the audio-feature diarizer) needs a
+      # writable cache dir; the appuser home isn't writable in the slim
+      # runtime image.
+      - NUMBA_CACHE_DIR=/tmp/numba_cache
+    depends_on:
+      postgres:
+        condition: service_healthy
+      chromadb:
+        condition: service_started
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./src:/app/src
+      - ./scripts:/app/scripts
+      - ./data:/app/data
+      - ./tests:/app/tests
+      - ./data/documents:/app/data/documents
+    networks:
+      - medrecord-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  chromadb:
+    image: chromadb/chroma:0.5.23
+    container_name: medrecord-chromadb
+    ports:
+      - "8001:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+    environment:
+      - ANONYMIZED_TELEMETRY=False
+    networks:
+      - medrecord-network
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: medrecord-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-dev_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dev_password}
+      POSTGRES_DB: ${POSTGRES_DB:-medrecord_dev}
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - medrecord-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-dev_user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: medrecord-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --appendfsync everysec
+    networks:
+      - medrecord-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  medrecord-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  chroma_data:
+  redis_data:

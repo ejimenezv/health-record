@@ -1,38 +1,65 @@
 [project]
-name = "medrecord-ai"
-version = "0.1.0"
-description = "AI-powered medical consultation transcription service for Spanish language"
+name = "medrecord-ai-service"
+version = "1.0.0"
+description = "Servicio de IA para transcripción y extracción médica en español"
 readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}
 authors = [
     {name = "Your Name", email = "your.email@example.com"}
 ]
-keywords = ["medical", "transcription", "ai", "llm", "spanish", "whisper", "rag"]
-
-[project.optional-dependencies]
-dev = [
-    "pytest>=7.4.0",
-    "pytest-asyncio>=0.21.0",
-    "pytest-cov>=4.1.0",
-    "black>=23.0.0",
-    "ruff>=0.1.0",
-    "mypy>=1.5.0",
-    "pre-commit>=3.4.0",
-]
-
-[tool.black]
-line-length = 100
-target-version = ["py311"]
 
 [tool.ruff]
+target-version = "py311"
 line-length = 100
-select = ["E", "F", "I", "N", "W", "UP"]
+select = [
+    "E",
+    "W",
+    "F",
+    "I",
+    "B",
+    "C4",
+    "UP",
+]
+ignore = [
+    "E501",
+    "B008",
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
 
 [tool.mypy]
 python_version = "3.11"
-strict = true
+warn_return_any = true
+warn_unused_ignores = true
+disallow_untyped_defs = true
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
-asyncio_mode = "auto"
 testpaths = ["tests"]
+python_files = "test_*.py"
+python_functions = "test_*"
+asyncio_mode = "auto"
+addopts = "-v --tb=short"
+markers = [
+    "slow: marks tests as slow",
+    "integration: marks tests as integration tests",
+    "ragas: marks RAGAS evaluation tests (requires OPENAI_API_KEY)",
+    "live: marks tests that hit a live running service",
+    "performance: marks RAG real-time performance/latency tests",
+]
+
+[tool.coverage.run]
+source = ["src"]
+branch = true
+omit = ["*/tests/*", "*/__pycache__/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+]

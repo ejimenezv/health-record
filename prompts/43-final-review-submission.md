@@ -73,12 +73,12 @@ make pre-delivery
 
 [5/5] Checking required files...
   ✅ README.md
-  ✅ .env.example
+  ✅ ai-service/.env.example
   ✅ .gitignore
-  ✅ Makefile
-  ✅ Dockerfile
-  ✅ docker-compose.yml
-  ✅ requirements.txt
+  ✅ ai-service/Makefile
+  ✅ ai-service/Dockerfile
+  ✅ ai-service/docker-compose.yml
+  ✅ ai-service/requirements.txt
   ✅ .github/workflows/ci.yml
   ✅ docs/PROJECT_DOCUMENTATION.md
   ✅ docs/architecture/architecture_c4_context.png
@@ -94,18 +94,18 @@ make pre-delivery
   ✅ docs/security/threat-model.md
   ✅ docs/observability/README.md
   ✅ docs/PRE_DELIVERY_CHECKLIST.md
-  ✅ src/api/main.py
-  ✅ src/core/llm_client.py
-  ✅ src/rag/retriever.py
-  ✅ src/security/auth.py
-  ✅ tests/unit/
-  ✅ tests/integration/
-  ✅ tests/ragas/
-  ✅ tests/load/
-  ✅ notebooks/ragas_evaluation.ipynb
-  ✅ reports/coverage.xml
-  ✅ reports/ragas_results.json
-  ✅ reports/load_test_results.json
+  ✅ ai-service/src/api/main.py
+  ✅ ai-service/src/core/llm_client.py
+  ✅ ai-service/src/rag/retriever.py
+  ✅ ai-service/src/security/auth.py
+  ✅ ai-service/tests/unit/
+  ✅ ai-service/tests/integration/
+  ✅ ai-service/tests/ragas/
+  ✅ ai-service/tests/load/
+  ✅ ai-service/notebooks/ragas_evaluation.ipynb
+  ✅ ai-service/reports/coverage.xml
+  ✅ ai-service/reports/ragas_results.json
+  ✅ ai-service/reports/load_test_results.json
   ✅ scripts/check-required-files.sh
   ✅ scripts/security-scan.sh
 
@@ -128,7 +128,7 @@ FAILED tests/unit/test_extraction.py::test_extract_medications - AssertionError
 **Solución:**
 ```bash
 # Ejecuta solo ese test para ver el detalle
-pytest tests/unit/test_extraction.py::test_extract_medications -v
+pytest ai-service/tests/unit/test_extraction.py::test_extract_medications -v
 
 # Corrige el código o el test
 # Re-ejecuta make test
@@ -143,7 +143,7 @@ Required coverage: 80.0%
 **Solución:**
 ```bash
 # Genera reporte HTML para ver qué falta
-pytest tests/ --cov=src --cov-report=html
+pytest ai-service/tests/ --cov=src --cov-report=html
 
 # Abre htmlcov/index.html en navegador
 # Identifica archivos con < 80% cobertura
@@ -167,7 +167,7 @@ bandit: Found 3 high severity issues
 **Solución:**
 ```bash
 # Ve el reporte detallado
-bandit -r src/ -ll
+cd ai-service && bandit -r src/ -ll
 
 # Corrige los issues (ej. hardcoded credentials)
 # Re-ejecuta make test-security
@@ -398,7 +398,7 @@ No leaks found! ✅
 ```
 Finding:     OPENAI_API_KEY="sk-proj-abc123..."
 Secret:      sk-proj-abc123...
-File:        src/config.py
+File:        ai-service/src/config.py
 Line:        15
 ```
 
@@ -622,7 +622,7 @@ Sistema de transcripción y extracción automática de consultas médicas en esp
 - [x] Mensajes de commit descriptivos (Conventional Commits)
 - [x] Al menos 1 Pull Request mergeado con descripción
 - [x] Tag `v1.0.0` creado y pusheado
-- [x] Archivo `.env` NO commiteado (solo `.env.example`)
+- [x] Archivo `.env` NO commiteado (solo `ai-service/.env.example`)
 - [x] Sin credenciales en código ni historial (verificado con gitleaks)
 - [x] CI/CD en verde en último commit de main
 
@@ -654,7 +654,7 @@ Sistema de transcripción y extracción automática de consultas médicas en esp
 - [x] **`make test-streaming` pasa sin errores**
 - [x] `make check-files` pasa sin errores
 - [x] Sin `print()` en producción (solo structured logging)
-- [x] Dependencias versionadas exactamente en `requirements.txt`
+- [x] Dependencias versionadas exactamente en `ai-service/requirements.txt`
 
 ## Real-Time Streaming
 
@@ -669,10 +669,10 @@ Sistema de transcripción y extracción automática de consultas médicas en esp
 
 ## Pruebas y Evaluación
 
-- [x] Reporte cobertura en `reports/coverage.xml`
-- [x] Reporte RAGAS en `reports/ragas_results.json`
-- [x] Reporte load test en `reports/load_test_results.json`
-- [x] Notebook `notebooks/ragas_evaluation.ipynb` ejecutable
+- [x] Reporte cobertura en `ai-service/reports/coverage.xml`
+- [x] Reporte RAGAS en `ai-service/reports/ragas_results.json`
+- [x] Reporte load test en `ai-service/reports/load_test_results.json`
+- [x] Notebook `ai-service/notebooks/ragas_evaluation.ipynb` ejecutable
 
 ## Entregables E4
 
@@ -1249,7 +1249,7 @@ git push origin v1.0.1
 | | Sección 10.4 con roadmap completo | [ ] |
 | **Tests** | Cobertura >80% | [ ] |
 | | RAGAS scores cumpliendo umbrales | [ ] |
-| | Reportes en `reports/` | [ ] |
+| | Reportes en `ai-service/reports/` | [ ] |
 | | **WebSocket tests pasando** | [ ] |
 | | **Streaming tests pasando** | [ ] |
 | **Sistema** | AWS EC2 funcionando | [ ] |

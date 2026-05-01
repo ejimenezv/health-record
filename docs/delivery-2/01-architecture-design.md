@@ -178,22 +178,30 @@
 
 ### 3.1 Componentes Principales (Arquitectura Real-Time)
 
-| Componente | Tecnología | Responsabilidad | Justificación |
+> **Nota de implementación (post-Prompt 27.3):** Varios componentes
+> evolucionaron durante la implementación. Esta tabla refleja el estado
+> actual; ver columna "Notas" para deltas vs. el diseño inicial.
+
+| Componente | Tecnología | Responsabilidad | Notas |
 |------------|------------|-----------------|---------------|
-| **API Gateway** | FastAPI | Enrutamiento REST, autenticación, rate limiting, documentación OpenAPI | Framework Python moderno con async nativo, validación Pydantic, docs automáticas. Requisito BSG usar Python. |
-| **★ WebSocket Gateway** | FastAPI WebSockets + Opus | **Conexión bidireccional** para streaming de audio y eventos en tiempo real. Maneja reconexión, autenticación WS, event broadcasting | FastAPI tiene WebSocket nativo, Opus codec reduce bandwidth 70% vs PCM (16kHz Opus ≈ 24-32 kbps). Latencia crítica <500ms. |
-| **★ Stream Processor** | Silero VAD + NumPy | **Procesamiento inteligente de audio streaming**: VAD en tiempo real, buffering adaptivo (voz: 5s, silencio: batch/skip), decisión de envío a Whisper | Silero VAD <100ms latency, buffering inteligente ahorra 20-30% costos Whisper sin sacrificar UX. |
-| **Transcription Service** | OpenAI Whisper API (streaming chunks) | Conversión de audio a texto en español con chunks de 5s o batches | Mejor precisión para español (>95%), timestamps incluidos, API madura. Chunks pequeños = baja latencia. |
-| **Diarization Service** | Heurísticas + LLM (incremental) | Identificación de hablantes (médico/paciente) de forma incremental | Evita costos de servicios de diarización externos. Heurísticas basadas en turnos y vocabulario médico, actualiza en streaming. |
-| **Extraction Service** | GPT-4o-mini (60%) + GPT-4o (40%) | **Extracción incremental estructurada** de datos médicos: síntomas, diagnósticos, prescripciones, motivo consulta | Multi-tier: GPT-4o-mini para extracciones simples (cost savings), GPT-4o para críticas (prescripciones). Latencia <3s. |
-| **★ Entity Matching Engine** | text-embedding-3-small + reglas de negocio | **Matching semántico y resolución de conflictos**: detecta si nueva mención se refiere a entidad existente, fusiona/actualiza según umbral (0.70-0.85-1.0) | Evita duplicados, mantiene coherencia. Embeddings + business rules (medication name, symptom location, ICD-10). Versionado con changelog. |
-| **RAG Pipeline** | LangChain + ChromaDB | **Validación asíncrona incremental**: priority queue (CRITICAL/HIGH/MEDIUM), cache Redis (60-70% hit rate) | ChromaDB es gratuito y local. Validación no-bloqueante con timeouts por prioridad (1s/2s/3s). |
-| **Vector Store** | ChromaDB | Almacenamiento y búsqueda de embeddings para RAG | Open source, fácil setup local, suficiente para volumen esperado (<1M chunks). |
-| **Embedding Service** | OpenAI text-embedding-3-small | Generación de embeddings para RAG y entity matching | Buen balance costo/calidad, 1536 dimensiones, soporte multilingüe. Usado tanto en RAG como matching. |
-| **Database** | PostgreSQL | Metadatos, sesiones, usuarios, audit logs, version history de entidades | Robusto, ACID, soporte JSON para changelogs, estándar de industria. |
-| **Session State + Cache** | Redis | **CRÍTICO para real-time**: WebSocket session state, event buffering (reconexión), RAG cache (300ms→5ms), priority queue | Latencia <5ms, persistencia de sesión para reconexión (60s window), cache con TTL 30min. ESENCIAL para streaming. |
-| **Auth Service** | JWT + bcrypt | Autenticación REST y WebSocket (token en handshake) | Estándar de industria, stateless, fácil de implementar. WebSocket usa mismo JWT en upgrade request. |
-| **Observability** | structlog + Prometheus | Logging estructurado, métricas de latencia (p50/p95/p99), trazas de eventos WS | Configuración estándar, compatible con Grafana. Crítico monitorear latencias real-time. |
+| **API Gateway** | FastAPI | Enrutamiento REST, autenticación, rate limiting, documentación OpenAPI | Sin cambios |
+| **★ WebSocket Gateway** | FastAPI WebSockets | **Conexión bidireccional** para streaming de audio y eventos en tiempo real. Audio en formato `audio/webm;codecs=opus` (MediaRecorder) | Cambio: el cliente envía webm container, no Opus crudo. La descodificación se hace via pydub+ffmpeg sobre un acumulador cumulativo de sesión. |
+| **★ Stream slicer + VAD pre-check** | Silero VAD (singleton de proceso) + pydub | Slicing acumulativo con overlap de 1.5 s; VAD pre-check descarta slices silentes antes de Whisper | El `StreamProcessor` original (con árbol de decisión por chunk) **fue retirado**: era incompatible con la naturaleza no-decodable de chunks webm subsiguientes. Ver [streaming-transcription-architecture.md](../architecture/streaming-transcription-architecture.md). |
+| **Transcription Service** | OpenAI Whisper API (`verbose_json`) | ASR con segments + timestamps. Slicing con overlap permite dedup por timestamps de segmentos | Sin cambios funcionales. `verbose_json` es ahora load-bearing (necesario para overlap dedup y hallucination filter). |
+| **★ Hallucination filter** | Patrones + heurísticas + low-confidence checks | Descarta salidas espurias de Whisper sobre silencio (créditos YouTube, "Muchas gracias", `[Música]`, repeticiones, segments con `no_speech_prob` alto) | **Nuevo (follow-up #3):** [`src/transcription/hallucination_filter.py`](../../ai-service/src/transcription/hallucination_filter.py). 6 capas de detección, 40 unit tests. |
+| **★ AudioFeatureDiarizer** | Resemblyzer (256-dim L2-normed) + clustering online | Identificación de hablantes por **timbre** (embeddings de voz + cosine similarity ≥ 0.70). Rol DOCTOR/PATIENT por keywords sobre transcript | **Nuevo (follow-up #5)**, reemplaza diarizer keyword-only. Centroides en Redis (EMA update). Cap 4 speakers/sesión. |
+| **Extraction Service** | gpt-4o-mini (simple) + gpt-4o (críticas) | Extracción incremental (síntomas, diagnósticos, prescripciones) sobre rolling 3-chunk text context | Sin cambios estructurales; prompt de simple-extraction reforzado para no clasificar diagnósticos como síntomas. |
+| **★ Entity Matching Engine** | text-embedding-3-small + reglas de negocio | Matching semántico interno al `IncrementalExtractor`: nueva mención vs entidad existente | Sin cambios — sigue invocándose dentro del extractor. Las nuevas capas siguientes operan **encima** de su salida. |
+| **★ Atomic Entity Splitter** | gpt-4o-mini + heurística de short-circuit | Divide entidades compuestas ("fiebre y dolor de cabeza") en atómicas antes de UI/dedup | **Nuevo:** [`src/services/entity_splitter.py`](../../ai-service/src/services/entity_splitter.py). |
+| **★ Entity Type Validator** | gpt-4o-mini con strict JSON | Reclasifica entidades mal tipificadas por el extractor ("resfriado común" como síntoma → diagnóstico) | **Nuevo:** [`src/services/entity_type_validator.py`](../../ai-service/src/services/entity_type_validator.py). Confianza ≥ 0.7 para reclasificar; menor → keep original. |
+| **★ Entity Semantic Deduper** | text-embedding-3-small + cosine | Dedup semántico cross-mention de sinónimos ("Cefalea" ↔ "dolor de cabeza"); per-tipo, por sesión | **Nuevo:** [`src/services/entity_dedup.py`](../../ai-service/src/services/entity_dedup.py). Threshold 0.86; opcional LLM tiebreaker para borderline. |
+| **RAG Pipeline** | ChromaDB 0.5.23 + RetrieverService + cache Redis | Validación asíncrona priority-queue (CRITICAL/HIGH/MEDIUM); corpus = vademecum semilla (30 meds) + interacciones (25) + CIE-10 (40) | Cliente y servidor ChromaDB ahora alineados (0.5.23). Bug fix: interacciones se buscan por nombre real, no por `MED_<uuid>`. |
+| **Vector Store** | ChromaDB 0.5.23 | Almacenamiento de embeddings RAG | Sin cambios estructurales; pin de versión actualizado para alinear cliente/servidor. |
+| **Embedding Service** | OpenAI text-embedding-3-small | Embeddings para RAG, EntityMatchingEngine, Entity Semantic Deduper | Reusado en 4 componentes; hoist a `Services` singleton es follow-up #7. |
+| **Database** | PostgreSQL | Metadatos, sesiones, audit logs, persistencia de eventos del WS gateway | Sin cambios |
+| **Session State + Cache** | Redis | WS session state, RAG cache, **per-session speaker centroides del diarizer** | Speaker embeddings añadidos a `SpeakerState.speaker_embeddings`. |
+| **Auth Service** | JWT + bcrypt | Autenticación REST + WebSocket (dos secretos: usuario y service-to-service) | Sin cambios |
+| **Observability** | structlog + Prometheus | Logs estructurados con keys consistentes (`session_id`, `slice_idx`, `method`, `reason`) | Eventos clave loggeados: `Skipped silent slice`, `Overlap dedup`, `Stripped boundary overlap`, `Dropped Whisper hallucination`, `Speaker change detected method=audio`, `Dropped semantic duplicate`, `Reclassified entity` |
 
 ### 3.2 Servicios Externos
 
@@ -249,15 +257,98 @@
 - **Complejidad manejable**: FastAPI WebSockets nativo, Opus codec estándar, Redis para state management
 - **Latencia target alcanzable**: <2s end-to-end (VAD <100ms, Whisper chunks 5s, extraction <3s, WS <500ms)
 
-### 4.4 Diarización Heurística
+### 4.4 Diarización: keywords + audio-features (revisada en 27.3)
 
-**Decisión:** Usar heurísticas basadas en patrones de conversación en lugar de modelos de diarización por voz.
+**Decisión original:** Heurísticas keyword-only sobre el transcript.
 
-**Justificación:**
-- Evita costos de APIs de diarización ($$$)
-- Contexto médico ayuda a identificar roles
-- Precisión suficiente (>90%) para 2 hablantes
-- Puede mejorarse con LLM si es necesario
+**Decisión actual (post follow-up #5):** Diarización híbrida.
+- **Identificación de hablante (¿es la misma persona o distinta?)**: por
+  embeddings de voz (Resemblyzer 256-dim, MIT, modelo bundled, ~30 ms/slice
+  en CPU). Clustering online: cosine similarity vs centroides en Redis
+  con EMA update; threshold 0.70; cap 4 speakers/sesión.
+- **Asignación de rol (DOCTOR/PATIENT/UNKNOWN)**: keywords médicos en
+  español sobre el transcript (la lógica original no se reemplazó —
+  funcionaba bien para el rol; el problema era distinguir voces).
+
+**Justificación del cambio:**
+- El diarizer keyword-only no detectaba cambios cuando ambos hablantes
+  usaban vocabulario similar.
+- En sesiones con un solo hablante mayormente listening (consultas tipo
+  anamnesis), nunca emitía `speaker_changed`.
+- Resemblyzer evita la dependencia de servicios de diarización pagos y
+  no requiere HF token (modelo bundled en el wheel).
+
+**Limitaciones aceptadas:**
+- Cap fijo de 4 speakers; voces adicionales se mergean en el centroid
+  más cercano.
+- Asignación de rol sigue dependiendo de keywords — sesiones cortas o
+  con vocabulario atípico pueden quedar en `UNKNOWN`.
+
+### 4.5 Pipeline anti-duplicados de entidades (nuevo en 27.3)
+
+**Decisión:** Insertar 5 capas de procesamiento entre el extractor y la
+emisión a la UI/persistencia.
+
+```
+ExtractionEvent (del extractor)
+  ↓
+Layer A — AtomicEntitySplitter (LLM)
+  ↓
+Layer B — Forbidden-prefix (string heurística)
+  ↓
+Layer C — EntityTypeValidator (LLM)
+  ↓
+Layer D — Heuristic dedup (exact / containment per-type)
+  ↓
+Layer E — EntitySemanticDeduper (embeddings + cosine)
+  ↓
+emit extraction_update event
+```
+
+**Justificación:** El UI de React es append-only — una entidad
+incorrecta o duplicada no se puede retractar. Cada capa atrapa un modo
+de fallo distinto del extractor LLM:
+
+| Capa | Modo de fallo que atrapa |
+|---|---|
+| A | Compuestos como "fiebre y dolor de cabeza" emitidos junto con sus átomos |
+| B | Frases ofensivas obvias ("diagnóstico de…" como síntoma) |
+| C | Misclasificaciones sutiles ("resfriado común" como síntoma) |
+| D | Repeticiones exactas o contenciones |
+| E | Sinónimos médicos ("Cefalea" ↔ "dolor de cabeza") |
+
+**Costo:** ~$0.0002/entidad en LLM calls (gpt-4o-mini), ~$0.0000002 en
+embeddings. Despreciable vs el valor de una historia clínica limpia.
+
+### 4.6 Filtro de hallucinations Whisper (nuevo en 27.3)
+
+**Decisión:** Filtrar salidas de Whisper sobre silencio antes de
+propagar al transcript visible.
+
+**Justificación:** Whisper, sobre audio cuasi-silente, alucina frases
+de su corpus de entrenamiento (créditos de YouTube, "Muchas gracias",
+"[Música]", repeticiones de pleasantries). Estas frases **nunca** las
+dijo el doctor. Persistirlas en la historia clínica es un riesgo de
+data integrity.
+
+Implementación: 6 capas en
+[`src/transcription/hallucination_filter.py`](../../ai-service/src/transcription/hallucination_filter.py).
+
+### 4.7 RAG corpus seed curado (nuevo en RAG seeding)
+
+**Decisión:** Embarcar un dataset semilla curado manualmente (30
+medicamentos, 25 interacciones, 40 CIE-10) en el repo, con script de
+ingestión idempotente (`make ingest-vademecum-reset`).
+
+**Justificación:** Sin RAG poblado, el flujo de validación clínica
+nunca emite alertas y el panel "Alertas de Validación" parece roto. El
+dataset semilla cubre las interacciones críticas más comunes
+(warfarina + AINE, omeprazol + clopidogrel, etc.) y demuestra el flujo
+end-to-end. La sustitución por una fuente real (CIMA, Vademecum.es) es
+un swap de archivos JSON; el esquema y el flujo de retrieval no
+cambian.
+
+Detalles operativos: [`../guides/rag-vademecum-setup.md`](../guides/rag-vademecum-setup.md).
 
 ## 5. Patrones Arquitectónicos Aplicados
 

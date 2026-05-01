@@ -35,7 +35,7 @@ This service coordinates **async RAG validation** triggered by entity extraction
 
 ### 1. Create Event-Driven RAG Coordinator
 
-Create `src/rag/validation_coordinator.py`:
+Create `ai-service/src/rag/validation_coordinator.py`:
 
 ```python
 """
@@ -702,7 +702,7 @@ class RAGValidationCoordinator:
 
 ### 2. Create Validation Event Handlers
 
-Create `src/rag/event_handlers.py`:
+Create `ai-service/src/rag/event_handlers.py`:
 
 ```python
 """
@@ -788,7 +788,7 @@ class RAGEventHandler:
 
 ### 3. Create Batched Validation for Efficiency
 
-Create `src/rag/batched_validator.py`:
+Create `ai-service/src/rag/batched_validator.py`:
 
 ```python
 """
@@ -906,7 +906,7 @@ class BatchedRAGValidator:
 
 ### 4. Create RAG Prefetcher for Common Medications
 
-Create `src/rag/prefetcher.py`:
+Create `ai-service/src/rag/prefetcher.py`:
 
 ```python
 """
@@ -1046,7 +1046,7 @@ class RAGPrefetcher:
 
 ### 5. Create Integration Tests
 
-Create `tests/integration/test_rag_validation_coordinator.py`:
+Create `ai-service/tests/integration/test_rag_validation_coordinator.py`:
 
 ```python
 """
@@ -1216,11 +1216,11 @@ class TestRAGValidationCoordinator:
 
 ## Expected Deliverables
 
-1. `src/rag/validation_coordinator.py` - Event-driven RAG coordinator
-2. `src/rag/event_handlers.py` - Event handlers for extraction integration
-3. `src/rag/batched_validator.py` - Batched validation for efficiency
-4. `src/rag/prefetcher.py` - RAG prefetcher for common medications
-5. `tests/integration/test_rag_validation_coordinator.py` - Integration tests
+1. `ai-service/src/rag/validation_coordinator.py` - Event-driven RAG coordinator
+2. `ai-service/src/rag/event_handlers.py` - Event handlers for extraction integration
+3. `ai-service/src/rag/batched_validator.py` - Batched validation for efficiency
+4. `ai-service/src/rag/prefetcher.py` - RAG prefetcher for common medications
+5. `ai-service/tests/integration/test_rag_validation_coordinator.py` - Integration tests
 
 ## Verification Steps
 

@@ -29,7 +29,7 @@ This service will:
 
 ### 1. Create Stream Processor Service
 
-Create `src/services/stream_processor.py`:
+Create `ai-service/src/services/stream_processor.py`:
 
 ```python
 """
@@ -99,14 +99,11 @@ class SileroVAD:
         self.sample_rate = sample_rate
 
         # Load Silero VAD model (lightweight, CPU-friendly)
-        self.model, utils = torch.hub.load(
-            repo_or_dir='snakers4/silero-vad',
-            model='silero_vad',
-            force_reload=False,
-            onnx=False  # Use PyTorch for flexibility
-        )
+        # silero-vad 5.x exposes a top-level package; no torch.hub needed.
+        from silero_vad import load_silero_vad, get_speech_timestamps
 
-        self.get_speech_timestamps = utils[0]
+        self.model = load_silero_vad()
+        self.get_speech_timestamps = get_speech_timestamps
 
         logger.info(f"Silero VAD initialized (sample_rate={sample_rate}Hz)")
 
@@ -431,7 +428,7 @@ class StreamProcessor:
 
 ### 2. Create Stream Processor Tests
 
-Create `tests/unit/test_stream_processor.py`:
+Create `ai-service/tests/unit/test_stream_processor.py`:
 
 ```python
 """
@@ -559,7 +556,7 @@ class TestStreamProcessor:
 
 ### 3. Add Integration with WebSocket Gateway
 
-Update `src/services/websocket_gateway.py` (to be created in Prompt 16-A):
+Update `ai-service/src/services/websocket_gateway.py` (to be created in Prompt 16-A):
 
 ```python
 # Add to WebSocket Gateway
@@ -609,8 +606,8 @@ async def handle_audio_stream(self, websocket, session_id: str):
 
 ## Expected Deliverables
 
-1. `src/services/stream_processor.py` - Stream Processor with intelligent VAD
-2. `tests/unit/test_stream_processor.py` - Unit tests
+1. `ai-service/src/services/stream_processor.py` - Stream Processor with intelligent VAD
+2. `ai-service/tests/unit/test_stream_processor.py` - Unit tests
 3. Integration with WebSocket Gateway (Prompt 16-A)
 
 ## Verification Steps
@@ -634,6 +631,6 @@ async def handle_audio_stream(self, websocket, session_id: str):
 - **Opus codec** for 70% bandwidth reduction (handled by WebSocket Gateway)
 - **Cost target**: $0.27-0.32 per 60-min consultation (vs $0.36 pure streaming)
 - **Latency target**: <2s end-to-end (VAD <100ms, buffering ~5s, Whisper ~1s)
-- **Dependencies**: `silero-vad==4.0.0`, `torch==2.2.0` (CPU-only), `numpy==1.26.4`
+- **Dependencies**: `silero-vad==5.1.2`, `torch==2.2.0` (CPU-only), `numpy==1.26.4`
 - Stream Processor is session-scoped (one instance per WebSocket connection)
 - Statistics tracked for cost monitoring and optimization tuning

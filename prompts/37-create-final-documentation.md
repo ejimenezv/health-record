@@ -1847,7 +1847,7 @@ components:
 - [ ] **PROJECT_DOCUMENTATION.md**:
   - [ ] All sections completed (no `[XXX]` or `[Completar]` remaining)
   - [ ] Real cost data from AWS bill
-  - [ ] Real test results from `reports/` folder
+  - [ ] Real test results from `ai-service/reports/` folder
   - [ ] ADRs referenced correctly
   - [ ] Diagrams embedded correctly
 
@@ -1895,7 +1895,7 @@ This prompt ensures:
 - PROJECT_DOCUMENTATION.md is comprehensive technical documentation (target: complete reference)
 - OpenAPI spec is machine-readable + human-readable API docs (includes WebSocket documentation)
 - All three documents must tell a consistent story with no contradictions
-- Use real data from `reports/`, AWS billing, RAGAS results, cost tracker
+- Use real data from `ai-service/reports/`, AWS billing, RAGAS results, cost tracker
 - Update "last updated" dates when making changes
 - WebSocket API is documented inline in OpenAPI (as custom extension) for completeness
 - Real-time metrics include separate batch vs. streaming performance data

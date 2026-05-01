@@ -303,7 +303,7 @@ Si en el futuro se requiere migración a otro vector store:
 - Presupuesto cloud > $500/mes (justifica $70/mes de Pinecone)
 
 **Estrategia:**
-1. **Abstracción de interfaz**: Implementar `VectorStoreInterface` en `src/rag/vector_store.py`
+1. **Abstracción de interfaz**: Implementar `VectorStoreInterface` en `ai-service/src/rag/vector_store.py`
 2. **Adaptadores por proveedor**: `ChromaAdapter`, `PineconeAdapter`, `QdrantAdapter`
 3. **Migración de datos**: Script de export/import de embeddings + metadata
 4. **Blue-green deployment**: Mantener ambos vector stores en paralelo durante 1 semana de validación

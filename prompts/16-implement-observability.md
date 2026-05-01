@@ -16,7 +16,7 @@ BSG requires observability capabilities:
 ## Tasks
 
 ### 1. Create Structured Logging Configuration
-Create `src/core/logging.py`:
+Create `ai-service/src/core/logging.py`:
 
 ```python
 import structlog
@@ -134,7 +134,7 @@ class LogContext:
 ```
 
 ### 2. Create Logging Middleware
-Create `src/api/middleware/logging.py`:
+Create `ai-service/src/api/middleware/logging.py`:
 
 ```python
 import time
@@ -202,7 +202,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
 ```
 
 ### 3. Create Metrics Collector
-Create `src/core/metrics.py`:
+Create `ai-service/src/core/metrics.py`:
 
 ```python
 from typing import Dict, Optional, List
@@ -466,7 +466,7 @@ metrics = MetricsCollector()
 ```
 
 ### 4. Create Health Check Service
-Create `src/core/health.py`:
+Create `ai-service/src/core/health.py`:
 
 ```python
 import structlog
@@ -694,7 +694,7 @@ def setup_health_checks():
 ```
 
 ### 5. Create Health Endpoints
-Create `src/api/endpoints/health.py`:
+Create `ai-service/src/api/endpoints/health.py`:
 
 ```python
 from fastapi import APIRouter, Response
@@ -800,7 +800,7 @@ async def get_cost_metrics() -> Dict:
 ```
 
 ### 6. Create Metrics Middleware
-Create `src/api/middleware/metrics.py`:
+Create `ai-service/src/api/middleware/metrics.py`:
 
 ```python
 import time
@@ -862,7 +862,7 @@ class MetricsMiddleware(BaseHTTPMiddleware):
 ```
 
 ### 7. Write Observability Tests
-Create `tests/unit/test_observability.py`:
+Create `ai-service/tests/unit/test_observability.py`:
 
 ```python
 import pytest
@@ -971,13 +971,13 @@ class TestHealthChecker:
 ```
 
 ## Expected Deliverables
-- `src/core/logging.py` - Structured logging configuration
-- `src/core/metrics.py` - Metrics collector
-- `src/core/health.py` - Health check service
-- `src/api/middleware/logging.py` - Logging middleware
-- `src/api/middleware/metrics.py` - Metrics middleware
-- `src/api/endpoints/health.py` - Health endpoints
-- `tests/unit/test_observability.py` - Unit tests
+- `ai-service/src/core/logging.py` - Structured logging configuration
+- `ai-service/src/core/metrics.py` - Metrics collector
+- `ai-service/src/core/health.py` - Health check service
+- `ai-service/src/api/middleware/logging.py` - Logging middleware
+- `ai-service/src/api/middleware/metrics.py` - Metrics middleware
+- `ai-service/src/api/endpoints/health.py` - Health endpoints
+- `ai-service/tests/unit/test_observability.py` - Unit tests
 
 ## Verification Steps
 1. Structured logs include request_id, user_id, session_id, connection_id

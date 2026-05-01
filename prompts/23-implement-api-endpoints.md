@@ -32,7 +32,7 @@ This service provides two API modes:
 
 ### 1. Create API Schemas
 
-Create `src/api/schemas.py`:
+Create `ai-service/src/api/schemas.py`:
 
 ```python
 """
@@ -279,7 +279,7 @@ class ErrorResponse(BaseModel):
 
 ### 2. Create API Routes
 
-Create `src/api/routes.py`:
+Create `ai-service/src/api/routes.py`:
 
 ```python
 """
@@ -1084,7 +1084,7 @@ async def extract(
 
 ### 3. Create Security Module
 
-Create `src/security/auth.py`:
+Create `ai-service/src/security/auth.py`:
 
 ```python
 """
@@ -1129,7 +1129,7 @@ def verify_token(token: str) -> dict:
         )
 ```
 
-Create `src/security/guardrails.py`:
+Create `ai-service/src/security/guardrails.py`:
 
 ```python
 """
@@ -1191,10 +1191,10 @@ def sanitize_output(text: str) -> str:
 
 ## Expected Deliverables
 
-1. `src/api/schemas.py` - Pydantic models for all endpoints (including session management)
-2. `src/api/routes.py` - API route implementations (REST + session CRUD)
-3. `src/security/auth.py` - JWT authentication
-4. `src/security/guardrails.py` - Input validation and PII protection
+1. `ai-service/src/api/schemas.py` - Pydantic models for all endpoints (including session management)
+2. `ai-service/src/api/routes.py` - API route implementations (REST + session CRUD)
+3. `ai-service/src/security/auth.py` - JWT authentication
+4. `ai-service/src/security/guardrails.py` - Input validation and PII protection
 
 ## Verification Steps
 

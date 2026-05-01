@@ -28,7 +28,7 @@ This service will:
 
 ### 1. Create Incremental Extraction Models
 
-Create `src/services/extraction/models.py`:
+Create `ai-service/src/services/extraction/models.py`:
 
 ```python
 """
@@ -118,7 +118,7 @@ class ExtractionEvent(BaseModel):
 
 ### 2. Create Incremental Extraction Service
 
-Create `src/services/extraction/incremental_extractor.py`:
+Create `ai-service/src/services/extraction/incremental_extractor.py`:
 
 ```python
 """
@@ -579,7 +579,7 @@ Responde con JSON:
 
 ### 3. Integration with WebSocket Gateway
 
-Update `src/services/websocket_gateway.py` (add to existing file):
+Update `ai-service/src/services/websocket_gateway.py` (add to existing file):
 
 ```python
 # Add to WebSocket Gateway
@@ -648,8 +648,8 @@ async def handle_session(self, websocket, session_id: str):
 
 ## Expected Deliverables
 
-1. `src/services/extraction/models.py` - Extraction data models
-2. `src/services/extraction/incremental_extractor.py` - Incremental extraction service
+1. `ai-service/src/services/extraction/models.py` - Extraction data models
+2. `ai-service/src/services/extraction/incremental_extractor.py` - Incremental extraction service
 3. Integration with WebSocket Gateway
 4. Integration with Entity Matching Engine (Prompt 19-A)
 

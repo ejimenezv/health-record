@@ -1,0 +1,71 @@
+# ==============================================================
+# .dockerignore — MedRecord AI Service
+# ==============================================================
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv
+venv/
+env/
+.eggs/
+*.egg-info/
+dist/
+build/
+
+# Testing
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+coverage.xml
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Local data
+data/
+*.sqlite
+*.db
+
+# Reports
+reports/
+
+# Docker
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Notebooks
+notebooks/
+
+# Infrastructure (IaC)
+infrastructure/
+
+# Misc
+*.log
+tmp/
+temp/

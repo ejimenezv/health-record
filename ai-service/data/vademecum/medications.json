@@ -1,0 +1,318 @@
+[
+  {
+    "id": "med_paracetamol",
+    "name": "Paracetamol",
+    "ingrediente_activo": "paracetamol",
+    "presentaciones": ["500 mg", "650 mg", "1 g"],
+    "posologia": "500-1000 mg cada 6-8 horas, máximo 4 g/día en adultos",
+    "indicaciones": "Dolor leve a moderado, fiebre",
+    "contraindicaciones": "Insuficiencia hepática grave, hipersensibilidad",
+    "advertencias": "Hepatotoxicidad con dosis >4 g/día o consumo crónico de alcohol",
+    "embarazo": "Categoría B, primera elección como analgésico/antipirético",
+    "source": "AEMPS"
+  },
+  {
+    "id": "med_ibuprofeno",
+    "name": "Ibuprofeno",
+    "ingrediente_activo": "ibuprofeno",
+    "presentaciones": ["200 mg", "400 mg", "600 mg"],
+    "posologia": "400-600 mg cada 6-8 horas, máximo 2400 mg/día",
+    "indicaciones": "Dolor, fiebre, inflamación",
+    "contraindicaciones": "Úlcera péptica activa, insuficiencia renal grave, asma inducida por AINE, tercer trimestre embarazo",
+    "advertencias": "Riesgo gastrointestinal, cardiovascular y renal",
+    "embarazo": "Contraindicado en tercer trimestre",
+    "source": "AEMPS"
+  },
+  {
+    "id": "med_naproxeno",
+    "name": "Naproxeno",
+    "ingrediente_activo": "naproxeno",
+    "presentaciones": ["250 mg", "500 mg"],
+    "posologia": "500 mg inicial, luego 250 mg cada 6-8 h, máximo 1250 mg/día",
+    "indicaciones": "Dolor, inflamación, dismenorrea",
+    "contraindicaciones": "Úlcera péptica, insuficiencia renal o hepática grave",
+    "advertencias": "AINE: riesgo gastrointestinal y cardiovascular",
+    "source": "AEMPS"
+  },
+  {
+    "id": "med_diclofenaco",
+    "name": "Diclofenaco",
+    "ingrediente_activo": "diclofenaco",
+    "presentaciones": ["50 mg", "75 mg"],
+    "posologia": "50 mg cada 8 horas, máximo 150 mg/día",
+    "indicaciones": "Dolor inflamatorio musculoesquelético",
+    "contraindicaciones": "Cardiopatía isquémica, ICC, EAP, ictus, úlcera activa",
+    "advertencias": "Mayor riesgo cardiovascular entre AINE",
+    "source": "AEMPS"
+  },
+  {
+    "id": "med_aspirina",
+    "name": "Ácido acetilsalicílico",
+    "ingrediente_activo": "ácido acetilsalicílico",
+    "presentaciones": ["100 mg", "300 mg", "500 mg"],
+    "posologia": "Antiagregante: 75-100 mg/día. Analgésico: 500-1000 mg cada 4-6 h",
+    "indicaciones": "Dolor, fiebre; antiagregación plaquetaria",
+    "contraindicaciones": "Úlcera activa, hemofilia, niños <16 años (Reye), tercer trimestre embarazo",
+    "advertencias": "Riesgo hemorrágico aumentado",
+    "source": "AEMPS"
+  },
+  {
+    "id": "med_metamizol",
+    "name": "Metamizol",
+    "ingrediente_activo": "metamizol sódico",
+    "presentaciones": ["500 mg", "575 mg"],
+    "posologia": "500-1000 mg cada 6-8 horas, máximo 4 g/día",
+    "indicaciones": "Dolor agudo intenso, fiebre refractaria",
+    "contraindicaciones": "Antecedente de agranulocitosis, déficit de G6PD, embarazo (1.º y 3.º trimestre)",
+    "advertencias": "Riesgo bajo pero grave de agranulocitosis",
+    "source": "AEMPS"
+  },
+  {
+    "id": "med_tramadol",
+    "name": "Tramadol",
+    "ingrediente_activo": "tramadol",
+    "presentaciones": ["50 mg", "100 mg", "150 mg retard"],
+    "posologia": "50-100 mg cada 6-8 horas, máximo 400 mg/día",
+    "indicaciones": "Dolor moderado a intenso",
+    "contraindicaciones": "Intoxicación aguda por alcohol, hipnóticos, opioides; epilepsia no controlada; uso concomitante de IMAO",
+    "advertencias": "Riesgo serotoninérgico con ISRS/IMAO",
+    "source": "AEMPS"
+  },
+  {
+    "id": "med_amoxicilina",
+    "name": "Amoxicilina",
+    "ingrediente_activo": "amoxicilina",
+    "presentaciones": ["500 mg", "750 mg", "1 g"],
+    "posologia": "500-1000 mg cada 8 horas (vía oral)",
+    "indicaciones": "Infecciones respiratorias altas, otitis, amigdalitis, ITU",
+    "contraindicaciones": "Hipersensibilidad a betalactámicos",
+    "advertencias": "Erupciones cutáneas frecuentes; ajustar en insuficiencia renal",
+    "source": "AEMPS"
+  },
+  {
+    "id": "med_amoxiclav",
+    "name": "Amoxicilina-clavulánico",
+    "ingrediente_activo": "amoxicilina + ácido clavulánico",
+    "presentaciones": ["500/125 mg", "875/125 mg"],
+    "posologia": "875/125 mg cada 8-12 horas",
+    "indicaciones": "Infecciones respiratorias, ITU complicada, mordeduras, infecciones odontológicas",
+    "contraindicaciones": "Hipersensibilidad a betalactámicos, antecedente de ictericia colestásica con amoxiclav",
+    "source": "AEMPS"
+  },
+  {
+    "id": "med_azitromicina",
+    "name": "Azitromicina",
+    "ingrediente_activo": "azitromicina",
+    "presentaciones": ["250 mg", "500 mg"],
+    "posologia": "500 mg/día x 3 días, o 500 mg primer día y 250 mg los 4 siguientes",
+    "indicaciones": "Infecciones respiratorias, ITS (clamidia)",
+    "contraindicaciones": "Hipersensibilidad a macrólidos, antecedente de hepatitis colestásica",
+    "advertencias": "Prolongación QT; precaución con otros fármacos QT-prolongadores",
+    "source": "AEMPS"
+  },
+  {
+    "id": "med_ciprofloxacino",
+    "name": "Ciprofloxacino",
+    "ingrediente_activo": "ciprofloxacino",
+    "presentaciones": ["250 mg", "500 mg", "750 mg"],
+    "posologia": "500-750 mg cada 12 horas",
+    "indicaciones": "ITU, prostatitis, infecciones GI, respiratorias por gramnegativos",
+    "contraindicaciones": "Embarazo, lactancia, niños <18 años (salvo indicación)",
+    "advertencias": "Tendinopatía, prolongación QT, neuropatía, disglucemia",
+    "source": "AEMPS"
+  },
+  {
+    "id": "med_doxiciclina",
+    "name": "Doxiciclina",
+    "ingrediente_activo": "doxiciclina",
+    "presentaciones": ["100 mg"],
+    "posologia": "100 mg cada 12 horas el primer día, luego 100 mg/día",
+    "indicaciones": "Infecciones por intracelulares, acné, profilaxis malaria",
+    "contraindicaciones": "Embarazo, niños <8 años (tinción dental)",
+    "source": "AEMPS"
+  },
+  {
+    "id": "med_omeprazol",
+    "name": "Omeprazol",
+    "ingrediente_activo": "omeprazol",
+    "presentaciones": ["10 mg", "20 mg", "40 mg"],
+    "posologia": "20 mg/día, hasta 40 mg/día en casos graves",
+    "indicaciones": "ERGE, úlcera péptica, gastroprotección con AINE, H. pylori (combinado)",
+    "contraindicaciones": "Hipersensibilidad",
+    "advertencias": "Uso prolongado: hipomagnesemia, B12 baja, fracturas osteoporóticas",
+    "source": "AEMPS"
+  },
+  {
+    "id": "med_pantoprazol",
+    "name": "Pantoprazol",
+    "ingrediente_activo": "pantoprazol",
+    "presentaciones": ["20 mg", "40 mg"],
+    "posologia": "20-40 mg/día",
+    "indicaciones": "ERGE, úlcera péptica",
+    "source": "AEMPS"
+  },
+  {
+    "id": "med_losartan",
+    "name": "Losartán",
+    "ingrediente_activo": "losartán",
+    "presentaciones": ["50 mg", "100 mg"],
+    "posologia": "50 mg/día (rango 25-100 mg)",
+    "indicaciones": "Hipertensión arterial, nefropatía diabética",
+    "contraindicaciones": "Embarazo (2.º y 3.º trimestre), estenosis bilateral arteria renal",
+    "source": "AEMPS"
+  },
+  {
+    "id": "med_enalapril",
+    "name": "Enalapril",
+    "ingrediente_activo": "enalapril",
+    "presentaciones": ["5 mg", "10 mg", "20 mg"],
+    "posologia": "5-40 mg/día divididos en 1-2 tomas",
+    "indicaciones": "Hipertensión, insuficiencia cardiaca",
+    "contraindicaciones": "Embarazo, angioedema previo a IECA",
+    "advertencias": "Tos seca persistente; vigilar potasio y creatinina",
+    "source": "AEMPS"
+  },
+  {
+    "id": "med_amlodipino",
+    "name": "Amlodipino",
+    "ingrediente_activo": "amlodipino",
+    "presentaciones": ["5 mg", "10 mg"],
+    "posologia": "5-10 mg/día",
+    "indicaciones": "Hipertensión, angina",
+    "advertencias": "Edema maleolar dosis-dependiente",
+    "source": "AEMPS"
+  },
+  {
+    "id": "med_hidroclorotiazida",
+    "name": "Hidroclorotiazida",
+    "ingrediente_activo": "hidroclorotiazida",
+    "presentaciones": ["25 mg"],
+    "posologia": "12.5-25 mg/día",
+    "indicaciones": "Hipertensión, edema",
+    "advertencias": "Hipokalemia, hiponatremia, hiperuricemia, hiperglucemia",
+    "source": "AEMPS"
+  },
+  {
+    "id": "med_atenolol",
+    "name": "Atenolol",
+    "ingrediente_activo": "atenolol",
+    "presentaciones": ["50 mg", "100 mg"],
+    "posologia": "25-100 mg/día",
+    "indicaciones": "Hipertensión, angina, post-IAM",
+    "contraindicaciones": "Asma, EPOC grave, bloqueo AV 2.º o 3.º grado, ICC descompensada",
+    "source": "AEMPS"
+  },
+  {
+    "id": "med_metformina",
+    "name": "Metformina",
+    "ingrediente_activo": "metformina",
+    "presentaciones": ["500 mg", "850 mg", "1000 mg"],
+    "posologia": "500-2000 mg/día divididos con las comidas",
+    "indicaciones": "Diabetes mellitus tipo 2, primera elección",
+    "contraindicaciones": "Insuficiencia renal grave (FG <30), insuficiencia hepática grave, acidosis",
+    "advertencias": "Suspender en contraste yodado y cirugía mayor",
+    "source": "AEMPS"
+  },
+  {
+    "id": "med_warfarina",
+    "name": "Warfarina",
+    "ingrediente_activo": "warfarina",
+    "presentaciones": ["1 mg", "3 mg", "5 mg", "10 mg"],
+    "posologia": "Individualizada según INR objetivo (típicamente 2-3)",
+    "indicaciones": "Anticoagulación: FA, TVP, TEP, válvulas cardiacas",
+    "contraindicaciones": "Embarazo, hemorragia activa, HTA grave no controlada",
+    "advertencias": "Múltiples interacciones; monitorizar INR estrechamente",
+    "source": "AEMPS"
+  },
+  {
+    "id": "med_clopidogrel",
+    "name": "Clopidogrel",
+    "ingrediente_activo": "clopidogrel",
+    "presentaciones": ["75 mg"],
+    "posologia": "75 mg/día",
+    "indicaciones": "Antiagregación tras SCA, ictus isquémico, EAP",
+    "contraindicaciones": "Hemorragia activa, insuficiencia hepática grave",
+    "advertencias": "Riesgo hemorrágico; interacción con omeprazol",
+    "source": "AEMPS"
+  },
+  {
+    "id": "med_simvastatina",
+    "name": "Simvastatina",
+    "ingrediente_activo": "simvastatina",
+    "presentaciones": ["10 mg", "20 mg", "40 mg"],
+    "posologia": "10-40 mg por la noche",
+    "indicaciones": "Hipercolesterolemia, prevención cardiovascular",
+    "contraindicaciones": "Hepatopatía activa, embarazo, lactancia",
+    "advertencias": "Mialgia/rabdomiolisis; evitar zumo de pomelo y CYP3A4 inhibidores",
+    "source": "AEMPS"
+  },
+  {
+    "id": "med_atorvastatina",
+    "name": "Atorvastatina",
+    "ingrediente_activo": "atorvastatina",
+    "presentaciones": ["10 mg", "20 mg", "40 mg", "80 mg"],
+    "posologia": "10-80 mg/día",
+    "indicaciones": "Hipercolesterolemia, prevención cardiovascular",
+    "contraindicaciones": "Hepatopatía activa, embarazo",
+    "source": "AEMPS"
+  },
+  {
+    "id": "med_levotiroxina",
+    "name": "Levotiroxina",
+    "ingrediente_activo": "levotiroxina",
+    "presentaciones": ["25 µg", "50 µg", "75 µg", "100 µg"],
+    "posologia": "Inicio 1.6 µg/kg/día en hipotiroidismo primario",
+    "indicaciones": "Hipotiroidismo, supresión tirotropina",
+    "advertencias": "Tomar en ayunas, separar de calcio/hierro/fibra y de IBP",
+    "source": "AEMPS"
+  },
+  {
+    "id": "med_salbutamol",
+    "name": "Salbutamol",
+    "ingrediente_activo": "salbutamol",
+    "presentaciones": ["100 µg/inh"],
+    "posologia": "1-2 inhalaciones a demanda",
+    "indicaciones": "Asma, EPOC: rescate broncodilatador",
+    "advertencias": "Taquicardia y temblor",
+    "source": "AEMPS"
+  },
+  {
+    "id": "med_ssalmeterol_fluticasona",
+    "name": "Salmeterol/fluticasona",
+    "ingrediente_activo": "salmeterol + fluticasona",
+    "presentaciones": ["25/50 µg", "25/125 µg", "25/250 µg"],
+    "posologia": "2 inhalaciones cada 12 horas",
+    "indicaciones": "Asma persistente, EPOC",
+    "source": "AEMPS"
+  },
+  {
+    "id": "med_glibenclamida",
+    "name": "Glibenclamida",
+    "ingrediente_activo": "glibenclamida",
+    "presentaciones": ["5 mg"],
+    "posologia": "2.5-15 mg/día con el desayuno",
+    "indicaciones": "Diabetes mellitus tipo 2",
+    "contraindicaciones": "Diabetes tipo 1, insuficiencia renal o hepática grave",
+    "advertencias": "Hipoglucemia prolongada en ancianos",
+    "source": "AEMPS"
+  },
+  {
+    "id": "med_loratadina",
+    "name": "Loratadina",
+    "ingrediente_activo": "loratadina",
+    "presentaciones": ["10 mg"],
+    "posologia": "10 mg/día",
+    "indicaciones": "Rinitis alérgica, urticaria",
+    "source": "AEMPS"
+  },
+  {
+    "id": "med_dexametasona",
+    "name": "Dexametasona",
+    "ingrediente_activo": "dexametasona",
+    "presentaciones": ["0.5 mg", "1 mg", "4 mg", "8 mg"],
+    "posologia": "Variable según indicación; 0.5-9 mg/día",
+    "indicaciones": "Inflamación, alergia grave, edema cerebral, antiemético",
+    "advertencias": "Hiperglucemia, supresión adrenal con uso prolongado",
+    "source": "AEMPS"
+  }
+]

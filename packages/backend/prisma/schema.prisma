@@ -256,3 +256,117 @@ model Transcription {
 
   @@map("transcriptions")
 }
+
+// ============================================
+// PYTHON AI SERVICE INTEGRATION (Real-Time Streaming)
+// ============================================
+
+/// Real-time AI session bridging an appointment to the Python AI service.
+/// The Python service owns `sessionId`; this row mirrors it for persistence + audit.
+model AiSession {
+  id                    String   @id @default(uuid())
+  appointmentId         String?
+  sessionId             String   @unique // Python AI service session ID
+  patientId             String?
+  providerId            String?
+  appointmentType       String?
+  status                String   @default("active") // active, completed, failed, cancelled
+  websocketUrl          String?
+  finalTranscript       String?  @db.Text
+  totalCostUsd          Decimal  @default(0) @db.Decimal(10, 6)
+  audioDurationSeconds  Int      @default(0)
+  createdAt             DateTime @default(now())
+  completedAt           DateTime?
+  transcriptionEvents   TranscriptionEvent[]
+  extractionEvents      ExtractionEvent[]
+  validationAlerts      ValidationAlert[]
+  costEvents            CostEvent[]
+
+  @@index([sessionId])
+  @@index([appointmentId])
+  @@index([status])
+  @@map("ai_sessions")
+}
+
+/// Transcript / speaker change events streamed from the Python AI service.
+model TranscriptionEvent {
+  id           Int       @id @default(autoincrement())
+  sessionId    String
+  session      AiSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  eventType    String    // transcript_update, speaker_changed, error
+  chunkIndex   Int?
+  text         String?   @db.Text
+  speakerId    String?
+  speakerRole  String?   // DOCTOR, PATIENT, UNKNOWN
+  confidence   Decimal?  @db.Decimal(5, 4)
+  startTime    Decimal?  @db.Decimal(10, 3)
+  isFinal      Boolean   @default(false)
+  timestamp    DateTime  @default(now())
+  eventData    Json
+
+  @@index([sessionId, timestamp])
+  @@index([sessionId, chunkIndex])
+  @@map("transcription_events")
+}
+
+/// Entity extraction / validation events.
+model ExtractionEvent {
+  id                Int       @id @default(autoincrement())
+  sessionId         String
+  session           AiSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  eventType         String    // extraction_update, entity_validated
+  entityId          String
+  entityType        String?   // symptom, diagnosis, prescription, vital_sign, allergy, procedure
+  content           String?   @db.Text
+  confidence        Decimal?  @db.Decimal(5, 4)
+  validationStatus  String?   // approved, flagged, needs_review
+  chunkIndex        Int?
+  speaker           String?
+  timestamp         DateTime  @default(now())
+  eventData         Json
+
+  @@index([sessionId, entityType])
+  @@index([entityId])
+  @@index([sessionId, timestamp])
+  @@map("extraction_events")
+}
+
+/// Validation alerts (drug interactions, allergy conflicts, etc.).
+model ValidationAlert {
+  id                          Int        @id @default(autoincrement())
+  sessionId                   String
+  session                     AiSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  alertId                     String     @unique
+  alertType                   String     // drug_interaction, allergy_conflict, dosage_error, contraindication, missing_info
+  severity                    String     // CRITICAL, HIGH, MEDIUM, LOW
+  message                     String     @db.Text
+  relatedEntities             Json
+  recommendedAction           String?    @db.Text
+  requiresImmediateAttention  Boolean    @default(false)
+  acknowledged                Boolean    @default(false)
+  acknowledgedBy              String?
+  acknowledgedAt              DateTime?
+  timestamp                   DateTime   @default(now())
+  eventData                   Json
+
+  @@index([sessionId, severity])
+  @@index([alertId])
+  @@map("validation_alerts")
+}
+
+/// Cost tracking events.
+model CostEvent {
+  id                    Int       @id @default(autoincrement())
+  sessionId             String
+  session               AiSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  transcriptionCostUsd  Decimal?  @db.Decimal(10, 6)
+  extractionCostUsd     Decimal?  @db.Decimal(10, 6)
+  totalCostUsd          Decimal?  @db.Decimal(10, 6)
+  chunksProcessed       Int?
+  cacheHitRate          Decimal?  @db.Decimal(5, 4)
+  timestamp             DateTime  @default(now())
+  eventData             Json
+
+  @@index([sessionId, timestamp])
+  @@map("cost_events")
+}

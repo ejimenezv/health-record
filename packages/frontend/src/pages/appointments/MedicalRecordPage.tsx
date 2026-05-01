@@ -7,6 +7,7 @@ import { SymptomsSection } from '../../components/medical-record/SymptomsSection
 import { DiagnosisSection } from '../../components/medical-record/DiagnosisSection';
 import { PrescriptionsSection } from '../../components/medical-record/PrescriptionsSection';
 import { TranscriptionPanel } from '../../components/transcription/TranscriptionPanel';
+import { RealtimeSessionView } from '../../components/realtime/RealtimeSessionView';
 import { useAppointment, useUpdateAppointmentStatus } from '../../hooks/useAppointments';
 import {
   useMedicalRecord,
@@ -70,6 +71,9 @@ export function MedicalRecordPage() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+
+  const realtimeEnabled = import.meta.env.VITE_ENABLE_REALTIME === 'true';
+  const [transcriptionMode, setTranscriptionMode] = useState<'batch' | 'realtime'>('batch');
 
   // Keep a ref to always have the latest medical record data
   const medicalRecordRef = useRef<MedicalRecord | null | undefined>(medicalRecord);
@@ -398,11 +402,52 @@ export function MedicalRecordPage() {
 
       {/* AI Transcription Panel - Only show when appointment is in progress */}
       {isInProgress && !isCompleted && (
-        <TranscriptionPanel
-          appointmentId={appointmentId!}
-          onExtractionUpdate={handleExtractionUpdate}
-          disabled={!canEdit}
-        />
+        <div className="space-y-3">
+          {realtimeEnabled && (
+            <div className="flex items-center justify-end gap-2 text-sm">
+              <span className="text-gray-600">Modo de transcripcion:</span>
+              <div className="inline-flex rounded-md border bg-white p-0.5">
+                <button
+                  type="button"
+                  onClick={() => setTranscriptionMode('batch')}
+                  className={`rounded px-3 py-1 text-sm ${
+                    transcriptionMode === 'batch'
+                      ? 'bg-primary-600 text-white'
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  Estandar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTranscriptionMode('realtime')}
+                  className={`rounded px-3 py-1 text-sm ${
+                    transcriptionMode === 'realtime'
+                      ? 'bg-primary-600 text-white'
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  En Vivo (Beta)
+                </button>
+              </div>
+            </div>
+          )}
+
+          {transcriptionMode === 'realtime' && realtimeEnabled ? (
+            <RealtimeSessionView
+              appointmentId={appointmentId!}
+              patientId={patient.id}
+              appointmentType={appointment.appointmentType}
+              embedded
+            />
+          ) : (
+            <TranscriptionPanel
+              appointmentId={appointmentId!}
+              onExtractionUpdate={handleExtractionUpdate}
+              disabled={!canEdit}
+            />
+          )}
+        </div>
       )}
 
       {/* Show message if appointment not started */}

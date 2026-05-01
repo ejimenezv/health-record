@@ -68,9 +68,9 @@ Actualiza la tabla de KPIs con **resultados reales obtenidos**:
 ```
 
 **Fuente de datos:**
-- Latencia p95: `reports/load_test_results.json` → buscar `http_req_duration{p(95)}`
-- Cobertura: `reports/coverage.xml` → atributo `line-rate`
-- RAGAS scores: `reports/ragas_results.json`
+- Latencia p95: `ai-service/reports/load_test_results.json` → buscar `http_req_duration{p(95)}`
+- Cobertura: `ai-service/reports/coverage.xml` → atributo `line-rate`
+- RAGAS scores: `ai-service/reports/ragas_results.json`
 - Costo por consulta: Calcular desde dashboard de costos AWS o registros de cost_tracker
 
 #### Sección 7.2: Resultados de Pruebas de Rendimiento
@@ -134,10 +134,10 @@ Dataset de evaluación: 25 consultas médicas españolas representativas del flu
 - La métrica más fuerte es Faithfulness (0.91), indicando que el modelo se adhiere estrictamente a la transcripción
 - Context Precision de 0.83 demuestra que el sistema de diarización + extracción recupera la información médica correcta
 - El caso de hallucination detectado fue una dosis recomendada no mencionada en la consulta; mitigado con guardrails en producción
-- Dataset disponible en: `notebooks/spanish_medical_qa_dataset.json`
+- Dataset disponible en: `ai-service/notebooks/spanish_medical_qa_dataset.json`
 ```
 
-**Fuente:** `reports/ragas_results.json` generado por `pytest tests/ragas/test_rag_quality.py`
+**Fuente:** `ai-service/reports/ragas_results.json` generado por `pytest tests/ragas/test_rag_quality.py`
 
 #### Sección 8.3: Análisis y Optimización de Costos
 
@@ -483,7 +483,7 @@ Marca todos los ítems como completados:
 - [x] Mensajes de commit descriptivos (Conventional Commits)
 - [x] Al menos 1 Pull Request mergeado con descripción
 - [x] Tag `v1.0.0` creado y pusheado
-- [x] Archivo `.env` NO commiteado (solo `.env.example`)
+- [x] Archivo `.env` NO commiteado (solo `ai-service/.env.example`)
 - [x] Sin credenciales en código ni historial (verificado con gitleaks)
 - [x] CI/CD en verde en último commit de main
 
@@ -512,14 +512,14 @@ Marca todos los ítems como completados:
 - [x] `make test` pasa con cobertura 82% (>80%)
 - [x] `make check-files` pasa sin errores
 - [x] Sin `print()` en producción (solo structured logging)
-- [x] Dependencias versionadas exactamente en `requirements.txt`
+- [x] Dependencias versionadas exactamente en `ai-service/requirements.txt`
 
 ## Pruebas y Evaluación
 
-- [x] Reporte cobertura en `reports/coverage.xml`
-- [x] Reporte RAGAS en `reports/ragas_results.json`
-- [x] Reporte load test en `reports/load_test_results.json`
-- [x] Notebook `notebooks/ragas_evaluation.ipynb` ejecutable
+- [x] Reporte cobertura en `ai-service/reports/coverage.xml`
+- [x] Reporte RAGAS en `ai-service/reports/ragas_results.json`
+- [x] Reporte load test en `ai-service/reports/load_test_results.json`
+- [x] Notebook `ai-service/notebooks/ragas_evaluation.ipynb` ejecutable
 
 ## Entregables E4
 

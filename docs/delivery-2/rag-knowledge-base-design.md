@@ -1,5 +1,20 @@
 # Diseño de Knowledge Base Médica en Español
 
+> **Estado de implementación:** Este documento define el diseño objetivo
+> de la KB médica. La implementación actual incluye un **corpus semilla
+> curado manualmente** (30 medicamentos, 25 interacciones críticas, 40
+> códigos CIE-10) que demuestra el flujo end-to-end de validación con
+> alertas reales. El esquema de documentos en ChromaDB (sección 2) es
+> el implementado. Para el procedimiento operativo de carga y para
+> extender el corpus a una fuente real (CIMA, Vademecum.es), ver:
+>
+> - [`../guides/rag-vademecum-setup.md`](../guides/rag-vademecum-setup.md) — guía paso a paso de ingestión, comandos `make ingest-vademecum*`, troubleshooting
+> - [`ai-service/data/vademecum/`](../../ai-service/data/vademecum/) — datasets JSON
+> - [`ai-service/scripts/ingest_vademecum.py`](../../ai-service/scripts/ingest_vademecum.py) — script idempotente de ingestión
+>
+> El reemplazo del corpus semilla por una fuente real es una sustitución
+> de archivos JSON; el esquema y el flujo de retrieval permanecen iguales.
+
 ## 1. Fuentes de Datos
 
 ### 1.1 Medicamentos (Prioridad Alta)

@@ -6,6 +6,7 @@ import allergyRoutes from './allergy.routes.js';
 import chronicConditionRoutes from './chronicCondition.routes.js';
 import medicalRecordRoutes from './medical-record.routes.js';
 import transcriptionRoutes from './transcription.routes.js';
+import aiSessionRoutes from './ai-session.routes.js';
 
 const router: IRouter = Router();
 
@@ -26,5 +27,6 @@ router.use(allergyRoutes);
 router.use(chronicConditionRoutes);
 router.use(medicalRecordRoutes);
 router.use(transcriptionRoutes);
+router.use(aiSessionRoutes);
 
 export default router;

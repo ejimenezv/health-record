@@ -17,7 +17,7 @@ This prompt creates the final quality gates for the BSG delivery.
 
 ### 1. Create Comprehensive Makefile
 
-**File:** `Makefile` (project root)
+**File:** `Makefile` (project root — orchestrates frontend, backend, and AI service; targets `cd` into `ai-service/` for Python tooling)
 
 **Content:**
 ```makefile
@@ -693,7 +693,7 @@ ls -lh docs/architecture/*.png  # Verificar tamaño de imágenes (>1MB OK)
 
 ### 3. Código y Tests
 
-- [ ] **Cobertura de tests ≥80%**: Ver `reports/coverage/index.html`
+- [ ] **Cobertura de tests ≥80%**: Ver `ai-service/reports/coverage/index.html`
 - [ ] **RAGAS metrics cumplidas**:
   - Faithfulness >0.80
   - Context Precision >0.75
@@ -796,7 +796,7 @@ docker logs medrecord-ai-service 2>&1 | jq 'select(.context.extraction_latency_m
 ### 7. Datos Reales (NO Estimaciones)
 
 - [ ] **Costos reales** de AWS en `docs/PROJECT_DOCUMENTATION.md` (Sección 8.3)
-- [ ] **Resultados RAGAS** con scores reales en `reports/ragas_results.json`
+- [ ] **Resultados RAGAS** con scores reales en `ai-service/reports/ragas_results.json`
 - [ ] **Métricas de rendimiento** reales (latencia p95, throughput) en README
 - [ ] **Coverage real** (no placeholder) en README
 
@@ -923,7 +923,7 @@ Ver todos los comandos: `make help`
 
 After completing this prompt:
 
-- ✅ `Makefile` - Comprehensive workflow automation (40+ commands)
+- ✅ `Makefile` - Comprehensive workflow automation (40+ commands) at project root
 - ✅ `scripts/check-required-files.sh` - File verification script
 - ✅ `docs/PRE_DELIVERY_CHECKLIST.md` - Manual pre-delivery checklist
 - ✅ README.md - Updated with Makefile commands reference

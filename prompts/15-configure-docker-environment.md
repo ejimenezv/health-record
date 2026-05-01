@@ -18,7 +18,7 @@ The Docker setup must:
 
 ### 1. Create Multi-Stage Dockerfile
 
-Create `Dockerfile`:
+Create `ai-service/Dockerfile`:
 
 ```dockerfile
 # ==============================================================
@@ -100,7 +100,7 @@ CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--re
 
 ### 2. Create docker-compose.yml
 
-Create `docker-compose.yml`:
+Create `ai-service/docker-compose.yml` (Python-service-specific stack; the existing root `docker-compose.yml` for the Node monorepo is left untouched):
 
 ```yaml
 # ==============================================================
@@ -150,7 +150,7 @@ services:
 
   # ─── ChromaDB (Vector Store) ────────────────────────────────
   chromadb:
-    image: chromadb/chroma:0.4.22
+    image: chromadb/chroma:0.5.23
     container_name: medrecord-chromadb
     ports:
       - "8001:8000"
@@ -220,7 +220,7 @@ volumes:
 
 ### 3. Create docker-compose.override.yml for Development
 
-Create `docker-compose.override.yml`:
+Create `ai-service/docker-compose.override.yml`:
 
 ```yaml
 # ==============================================================
@@ -256,7 +256,7 @@ services:
 
 ### 4. Create docker-compose.prod.yml for Production
 
-Create `docker-compose.prod.yml`:
+Create `ai-service/docker-compose.prod.yml`:
 
 ```yaml
 # ==============================================================
@@ -315,7 +315,7 @@ services:
 
 ### 5. Create .dockerignore
 
-Create `.dockerignore`:
+Create `ai-service/.dockerignore`:
 
 ```
 # ==============================================================
@@ -563,7 +563,7 @@ export const aiServiceClient = new AIServiceClient();
 
 ### 7. Update docker-compose.yml to Include Existing Backend
 
-Create `docker-compose.full.yml` (full stack including existing services):
+Create `ai-service/docker-compose.full.yml` (full stack including existing services; build contexts are relative to this file under `ai-service/`, so `./packages/...` references should be resolved against the repo root by running compose with `-f ai-service/docker-compose.full.yml --project-directory .`):
 
 ```yaml
 # ==============================================================
@@ -610,18 +610,18 @@ services:
 
 ## Expected Deliverables
 
-1. `Dockerfile` - Multi-stage build (builder, runtime, development)
-2. `docker-compose.yml` - Development environment
-3. `docker-compose.override.yml` - Development overrides
-4. `docker-compose.prod.yml` - Production configuration
-5. `.dockerignore` - Files to exclude from build
-6. `docker-compose.full.yml` - Full stack integration
-7. `packages/backend/src/services/ai-service-client.ts` - Backend client
+1. `ai-service/Dockerfile` - Multi-stage build (builder, runtime, development)
+2. `ai-service/docker-compose.yml` - Development environment
+3. `ai-service/docker-compose.override.yml` - Development overrides
+4. `ai-service/docker-compose.prod.yml` - Production configuration
+5. `ai-service/.dockerignore` - Files to exclude from build
+6. `ai-service/docker-compose.full.yml` - Full stack integration
+7. `packages/backend/src/services/ai-service-client.ts` - Backend client (Node side, stays at repo root)
 
 ## Verification Steps
 
-1. `docker build -t medrecord-ai-service .` completes successfully
-2. `docker-compose up` starts all services
+1. `cd ai-service && docker build -t medrecord-ai-service .` completes successfully
+2. `cd ai-service && docker-compose up` starts all services
 3. `curl http://localhost:8000/api/v1/health` returns 200
 4. Hot reload works in development (change code, see changes)
 5. ChromaDB is accessible at localhost:8001

@@ -878,6 +878,15 @@ if len(existing.changelog) > 10:
 
 ## Expected Deliverables
 - `docs/delivery-2/07-entity-matching-engine.md` - Complete entity matching implementation guide
+- `ai-service/src/models/entity.py` - Pydantic models for `Entity`, `ChangelogEntry`, `MatchResult`
+- `ai-service/src/services/entity_matching.py` - `EntityMatchingEngine` implementation (semantic similarity + business rules + merge/version logic + entity store). Importable as `from src.services.entity_matching import EntityMatchingEngine` (this is the import used by Prompt 19's extraction service).
+- `ai-service/tests/unit/test_entity_matching.py` - Replace placeholder with real unit tests covering: strong match (>0.85), uncertain band with business rules (symptom/diagnosis/prescription), low-similarity CREATE_NEW, merge with version+changelog increment, and dose-update scenario.
+
+### Implementation Notes
+- The engine accepts an injected `embedding_fn: Callable[[str], Awaitable[List[float]]]` so tests can pass deterministic vectors and Prompt 19 can wire the real OpenAI embedding service later. Embedding service is not a hard dependency at this layer.
+- Cosine similarity is computed inline with numpy (`dot / (norm * norm)`); do **not** add `scikit-learn` to requirements just for this.
+- Entity persistence is abstracted behind an `EntityStore` protocol with an `InMemoryEntityStore` default. Redis-backed implementation comes later when Redis is introduced; do not import a redis client here.
+- Use `src.core.metrics.metrics.entity_matching_similarity` (already defined) to record similarity scores. Do not introduce `prometheus_client`.
 
 ## Verification Steps
 1. Matching algorithm with semantic similarity is documented

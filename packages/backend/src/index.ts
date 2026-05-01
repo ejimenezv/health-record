@@ -3,6 +3,7 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import app from './app.js';
 import { setupTranscriptionWebSocket } from './websocket/transcription.handler.js';
+import { setupAiSessionGateway } from './websocket/ai-session-gateway.js';
 
 const httpServer = createServer(app);
 
@@ -15,6 +16,7 @@ const io = new Server(httpServer, {
 });
 
 setupTranscriptionWebSocket(io);
+setupAiSessionGateway(httpServer);
 
 const PORT = process.env.PORT || 3001;
 

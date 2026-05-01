@@ -89,7 +89,7 @@ export class GPTService {
 
     try {
       const response = await openai.chat.completions.create({
-        model: 'gpt-4-turbo-preview',
+        model: 'gpt-4o',
         messages: [
           { role: 'system', content: EXTRACTION_SYSTEM_PROMPT },
           { role: 'user', content: `${contextMessage}Transcripción:\n\n${transcription}` },

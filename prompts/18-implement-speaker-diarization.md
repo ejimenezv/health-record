@@ -28,7 +28,7 @@ This service processes diarization **incrementally** as transcript chunks arrive
 ## Tasks
 
 ### 1. Create Incremental Diarization Data Models
-Create `src/transcription/diarization/models.py`:
+Create `ai-service/src/transcription/diarization/models.py`:
 
 ```python
 from pydantic import BaseModel, Field
@@ -164,7 +164,7 @@ class SpeakerChangeEvent(BaseModel):
 ```
 
 ### 2. Create Incremental Diarization Service Interface
-Create `src/transcription/diarization/base.py`:
+Create `ai-service/src/transcription/diarization/base.py`:
 
 ```python
 from abc import ABC, abstractmethod
@@ -236,7 +236,7 @@ class BaseIncrementalDiarizer(ABC):
 ```
 
 ### 3. Implement Incremental Diarization Service
-Create `src/transcription/diarization/incremental_diarizer.py`:
+Create `ai-service/src/transcription/diarization/incremental_diarizer.py`:
 
 ```python
 import structlog
@@ -604,7 +604,7 @@ class IncrementalDiarizer(BaseIncrementalDiarizer):
 ```
 
 ### 4. Implement LLM-Based Speaker Validation (Optional)
-Create `src/transcription/diarization/llm_validator.py`:
+Create `ai-service/src/transcription/diarization/llm_validator.py`:
 
 ```python
 import structlog
@@ -785,7 +785,7 @@ Analiza:
 ```
 
 ### 5. Implement Incremental Transcript Builder
-Create `src/transcription/diarization/incremental_builder.py`:
+Create `ai-service/src/transcription/diarization/incremental_builder.py`:
 
 ```python
 import structlog
@@ -1024,7 +1024,7 @@ class ConversationFormatter:
 ```
 
 ### 6. Create Diarization Module Exports
-Create `src/transcription/diarization/__init__.py`:
+Create `ai-service/src/transcription/diarization/__init__.py`:
 
 ```python
 from src.transcription.diarization.models import (
@@ -1070,7 +1070,7 @@ __all__ = [
 ```
 
 ### 7. Write Incremental Diarization Tests
-Create `tests/unit/test_incremental_diarization.py`:
+Create `ai-service/tests/unit/test_incremental_diarization.py`:
 
 ```python
 import pytest
@@ -1337,13 +1337,13 @@ class TestConversationFormatter:
 ```
 
 ## Expected Deliverables
-- `src/transcription/diarization/__init__.py` - Module exports
-- `src/transcription/diarization/models.py` - Data models (with incremental state)
-- `src/transcription/diarization/base.py` - Interface for incremental diarizer
-- `src/transcription/diarization/incremental_diarizer.py` - Incremental implementation
-- `src/transcription/diarization/llm_validator.py` - LLM-based validation (optional)
-- `src/transcription/diarization/incremental_builder.py` - Incremental transcript builder
-- `tests/unit/test_incremental_diarization.py` - Unit tests
+- `ai-service/src/transcription/diarization/__init__.py` - Module exports
+- `ai-service/src/transcription/diarization/models.py` - Data models (with incremental state)
+- `ai-service/src/transcription/diarization/base.py` - Interface for incremental diarizer
+- `ai-service/src/transcription/diarization/incremental_diarizer.py` - Incremental implementation
+- `ai-service/src/transcription/diarization/llm_validator.py` - LLM-based validation (optional)
+- `ai-service/src/transcription/diarization/incremental_builder.py` - Incremental transcript builder
+- `ai-service/tests/unit/test_incremental_diarization.py` - Unit tests
 
 ## Verification Steps
 

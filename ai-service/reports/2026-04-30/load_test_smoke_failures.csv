@@ -1,0 +1,3 @@
+Method,Name,Error,Occurrences
+POST,/api/v1/query [POST],CatchResponseError('Query failed: 500'),30
+POST,/api/v1/query [POST],CatchResponseError('Query failed: 429'),44
